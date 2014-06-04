@@ -1,0 +1,387 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+<pcitable>
+  <vendor id="8086">
+    <short>Intel Corporation</short>
+    <name>Intel Corporation</name>
+    <device id="10b6">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598 10GbE PCI-Express Ethernet Controller</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598 10GbE PCI-Express Ethernet Controller</desc>
+      </table>
+    </device>
+    <device id="10c6">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AF Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AF Dual Port Network Connection</desc>
+      </table>
+    </device>
+# 		8086 a05f  10-Gigabit XF SR Dual Port Server Adapter
+# 		8086 a15f  10-Gigabit XF SR Dual Port Server Adapter
+    <device id="10c7">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AF Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AF Network Connection</desc>
+      </table>
+    </device>
+# 		1014 037f  10-Gigabit XF SR Server Adapter
+# 		1014 0380  10-Gigabit XF LR Server Adapter
+# 		8086 a05f  10-Gigabit XF SR Server Adapter
+# 		8086 a15f  10-Gigabit XF SR Server Adapter
+# 		8086 a16f  10-Gigabit XF SR Server Adapter
+    <device id="10c8">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AT Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AT Network Connection</desc>
+      </table>
+    </device>
+# 		8086 a10c  10-Gigabit AT Server Adapter
+# 		8086 a11c  10-Gigabit AT Server Adapter
+# 		8086 a12c  10-Gigabit AT Server Adapter
+    <device id="10db">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit Dual Port Network Connection</desc>
+      </table>
+    </device>
+    <device id="10dd">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AT CX4 Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AT CX4 Network Connection</desc>
+      </table>
+    </device>
+    <device id="10e1">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AF Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AF Dual Port Network Connection</desc>
+      </table>
+    </device>
+# 		8086 a15f  10-Gigabit SR Dual Port Express Module
+    <device id="10ec">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AT CX4 Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AT CX4 Network Connection</desc>
+      </table>
+    </device>
+# 		8086 a01f  10-Gigabit CX4 Dual Port Server Adapter
+# 		8086 a11f  10-Gigabit CX4 Dual Port Server Adapter
+    <device id="10f1">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AF Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AF Dual Port Network Connection</desc>
+      </table>
+    </device>
+# 		8086 a20f  10-Gigabit AF DA Dual Port Server Adapter
+# 		8086 a21f  10-Gigabit AF DA Dual Port Server Adapter
+    <device id="10f4">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB 10-Gigabit AF Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB 10-Gigabit AF Network Connection</desc>
+      </table>
+    </device>
+# 		8086 106f  10-Gigabit XF LR Server Adapter
+# 		8086 a06f  10-Gigabit XF LR Server Adapter
+    <device id="10f7">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>10-Gigabit BR KX4 Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|10-Gigabit BR KX4 Dual Port Network Connection</desc>
+      </table>
+    </device>
+# 		108e 7b12  Sun Dual 10GbE PCIe 2.0 FEM
+# 		8086 000d  Ethernet Mezzanine Adapter X520-KX4-2
+    <device id="10f8">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Backplane Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Backplane Connection</desc>
+      </table>
+    </device>
+# 		1028 1f63  10GbE 2P X520k bNDC
+# 		103c 17d2  Ethernet 10Gb 2-port 560M Adapter
+# 		103c 18d0  HP Ethernet 10Gb 2-port 560FLB Adapter
+# 		8086 000c  Ethernet X520 10GbE Dual Port KX4-KR Mezz
+    <device id="10f9">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit CX4 Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit CX4 Dual Port Network Connection</desc>
+      </table>
+    </device>
+    <device id="10fb">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Network Connection</desc>
+      </table>
+    </device>
+# 		1028 1f72  Ethernet 10G 4P X520/I350 rNDC
+# 		103c 17d0  HP Ethernet 10Gb 2-port 560FLR-SFP+ Adapter
+# 		103c 17d3  HP Ethernet 10Gb 2-port 560SFP+ Adapter
+# 		103c 211b  HP Ethernet 10Gb 1-port P560FLR-SFP+ Adapter
+# 		103c 2159  HP Ethernet 10Gb 2-port 562i Adapter
+# 		108e 7b11  Ethernet Server Adapter X520-2
+# 		17aa 1071  ThinkServer X520-2 AnyFabric
+# 		8086 0002  Ethernet Server Adapter X520-DA2
+# 		8086 0003  Ethernet Server Adapter X520-2
+# 		8086 0006  Ethernet Server Adapter X520-1
+# 		8086 0008  Ethernet OCP Server Adapter X520-2
+# 		8086 000a  Ethernet Server Adapter X520-1
+# 		8086 000c  Ethernet Server Adapter X520-2
+# 		8086 000d  Ethernet Server Adapter X520-1OCP
+# 		8086 0470  Ethernet 10GSFP+ DP Embedded CNA X520-2
+# 		8086 7a11  Ethernet Server Adapter X520-2
+# 		8086 7a12  Ethernet Server Adapter X520-2
+    <device id="10fc">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Network Connection</desc>
+      </table>
+    </device>
+    <device id="1507">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet Express Module X520-P2</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet Express Module X520-P2</desc>
+      </table>
+    </device>
+# 		108e 7b10  Ethernet Express Module X520-P2
+    <device id="1508">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82598EB Gigabit BX Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82598EB Gigabit BX Network Connection</desc>
+      </table>
+    </device>
+    <device id="150b">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>10-Gigabit AT2 Server Adapter</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|10-Gigabit AT2 Server Adapter</desc>
+      </table>
+    </device>
+# 		8086 a10c  10-Gigabit AT2 Server Adapter
+# 		8086 a11c  10-Gigabit AT2 Server Adapter
+# 		8086 a12c  10-Gigabit AT2 Server Adapter
+    <device id="1514">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet X520 10GbE Dual Port KX4 Mezz</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet X520 10GbE Dual Port KX4 Mezz</desc>
+      </table>
+    </device>
+# 		8086 000b  Ethernet X520 10GbE Dual Port KX4 Mezz
+    <device id="1515">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>X540 Ethernet Controller Virtual Function</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|X540 Ethernet Controller Virtual Function</desc>
+      </table>
+    </device>
+    <device id="1517">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599ES 10 Gigabit Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599ES 10 Gigabit Network Connection</desc>
+      </table>
+    </device>
+# 		1137 006a  Cisco UCS CNA M61KR-I Intel Converged Network Adapter
+    <device id="151c">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit TN Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit TN Network Connection</desc>
+      </table>
+    </device>
+# 		108e 7b13  Sun Dual 10GBASE-T LP
+# 		8086 a02c  Ethernet Server Adapter X520-T2
+# 		8086 a03c  Ethernet Server Adapter X520-T2
+# 		8086 a21c  Ethernet Server Adapter X520-T2
+    <device id="1528">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet Controller X540-AT2</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet Controller X540-AT2</desc>
+      </table>
+    </device>
+# 		1028 1f61  Ethernet 10G 4P X540/I350 rNDC
+# 		103c 192d  HP Ethernet 10Gb 2-port 561FLR-T Adapter
+# 		103c 211a  HP Ethernet 10Gb 2-port 561T Adapter
+# 		108e 7b14  Sun Dual Port 10 GbE PCIe 2.0 ExpressModule, Base-T
+# 		108e 7b15  Sun Dual Port 10 GbE PCIe 2.0 Low Profile Adapter, Base-T
+# 		1137 00bf  Ethernet Converged Network Adapter X540-T2
+# 		17aa 1073  ThinkServer X540-T2 AnyFabric
+# 		8086 0001  Ethernet Converged Network Adapter X540-T2
+# 		8086 0002  Ethernet Converged Network Adapter X540-T1
+# 		8086 001a  Ethernet Converged Network Adapter X540-T2
+# 		8086 00a2  Ethernet Converged Network Adapter X540-T1
+# 		8086 0471  Ethernet 10GBT DP Embedded CNA X540-T2
+# 		8086 5003  Ethernet 10G 2P X540-t Adapter
+    <device id="1529">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Network Connection with FCoE</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Network Connection with FCoE</desc>
+      </table>
+    </device>
+    <device id="152a">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Backplane Connection with FCoE</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Backplane Connection with FCoE</desc>
+      </table>
+    </device>
+    <device id="154a">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet Converged Network Adapter X520-4</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet Converged Network Adapter X520-4</desc>
+      </table>
+    </device>
+# 		8086 011a  Ethernet Converged Network Adapter X520-4
+# 		8086 011b  Ethernet Converged Network Adapter X520-4
+# 		8086 011c  Ethernet Converged Network Adapter X520-4
+    <device id="154d">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet 10G 2P X520 Adapter</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet 10G 2P X520 Adapter</desc>
+      </table>
+    </device>
+# 		8086 7b11  Ethernet 10G 2P X520 Adapter
+    <device id="154f">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Dual Port Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Dual Port Network Connection</desc>
+      </table>
+    </device>
+    <device id="1557">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>82599 10 Gigabit Network Connection</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|82599 10 Gigabit Network Connection</desc>
+      </table>
+    </device>
+# 		8086 0001  Ethernet OCP Server Adapter X520-1
+    <device id="1558">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet Converged Network Adapter X520-Q1</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet Converged Network Adapter X520-Q1</desc>
+      </table>
+    </device>
+# 		8086 011a  Ethernet Converged Network Adapter X520-Q1
+# 		8086 011b  Ethernet Converged Network Adapter X520-Q1
+    <device id="1560">
+      <vmware label="nic">
+        <driver>ixgbe</driver>
+      </vmware>
+      <name>Ethernet Controller X540</name>
+      <table file="pcitable" module="ignore" />
+      <table file="pcitable.Linux" module="ixgbe">
+        <desc>Intel Corporation|Ethernet Controller X540</desc>
+      </table>
+    </device>
+  </vendor>
+</pcitable>
