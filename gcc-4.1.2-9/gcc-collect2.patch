@@ -1,0 +1,67 @@
+--- gcc-4.1.1/gcc/collect2.c.orig	Thu Aug 18 18:20:34 2005
++++ gcc-4.1.1/gcc/collect2.c	Sun Jul 16 16:20:18 2006
+@@ -739,12 +739,10 @@
+   static const char *const real_ld_suffix = "real-ld";
+   static const char *const collect_ld_suffix = "collect-ld";
+   static const char *const nm_suffix	= "nm";
+-  static const char *const gnm_suffix	= "gnm";
+ #ifdef LDD_SUFFIX
+   static const char *const ldd_suffix	= LDD_SUFFIX;
+ #endif
+   static const char *const strip_suffix = "strip";
+-  static const char *const gstrip_suffix = "gstrip";
+ 
+ #ifdef CROSS_COMPILE
+   /* If we look for a program in the compiler directories, we just use
+@@ -756,25 +754,19 @@
+     concat(target_machine, "-", ld_suffix, NULL);
+   const char *const full_nm_suffix =
+     concat (target_machine, "-", nm_suffix, NULL);
+-  const char *const full_gnm_suffix =
+-    concat (target_machine, "-", gnm_suffix, NULL);
+ #ifdef LDD_SUFFIX
+   const char *const full_ldd_suffix =
+     concat (target_machine, "-", ldd_suffix, NULL);
+ #endif
+   const char *const full_strip_suffix =
+     concat (target_machine, "-", strip_suffix, NULL);
+-  const char *const full_gstrip_suffix =
+-    concat (target_machine, "-", gstrip_suffix, NULL);
+ #else
+   const char *const full_ld_suffix	= ld_suffix;
+   const char *const full_nm_suffix	= nm_suffix;
+-  const char *const full_gnm_suffix	= gnm_suffix;
+ #ifdef LDD_SUFFIX
+   const char *const full_ldd_suffix	= ldd_suffix;
+ #endif
+   const char *const full_strip_suffix	= strip_suffix;
+-  const char *const full_gstrip_suffix	= gstrip_suffix;
+ #endif /* CROSS_COMPILE */
+ 
+   const char *arg;
+@@ -927,11 +919,7 @@
+   nm_file_name = find_a_file (&path, REAL_NM_FILE_NAME);
+   if (nm_file_name == 0)
+ #endif
+-  nm_file_name = find_a_file (&cpath, gnm_suffix);
+-  if (nm_file_name == 0)
+-    nm_file_name = find_a_file (&path, full_gnm_suffix);
+-  if (nm_file_name == 0)
+-    nm_file_name = find_a_file (&cpath, nm_suffix);
++  nm_file_name = find_a_file (&cpath, nm_suffix);
+   if (nm_file_name == 0)
+     nm_file_name = find_a_file (&path, full_nm_suffix);
+ 
+@@ -945,11 +933,7 @@
+   strip_file_name = find_a_file (&path, REAL_STRIP_FILE_NAME);
+   if (strip_file_name == 0)
+ #endif
+-  strip_file_name = find_a_file (&cpath, gstrip_suffix);
+-  if (strip_file_name == 0)
+-    strip_file_name = find_a_file (&path, full_gstrip_suffix);
+-  if (strip_file_name == 0)
+-    strip_file_name = find_a_file (&cpath, strip_suffix);
++  strip_file_name = find_a_file (&cpath, strip_suffix);
+   if (strip_file_name == 0)
+     strip_file_name = find_a_file (&path, full_strip_suffix);
+ 

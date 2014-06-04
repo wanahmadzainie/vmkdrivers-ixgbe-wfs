@@ -1,0 +1,34 @@
+# Requires:
+#    glibc is installed under $TROOT/lin64/glibc-2.3.2-95.44
+# Installs binutils under $TROOT/lin32/binutils-2.17.50.0.15-modcall
+
+NAME=binutils
+VERSION=2.17.50.0.15
+TARGET=x86_64-linux
+
+TROOT=/build/toolchain
+PREFIX=$TROOT/lin32/$NAME-$VERSION-modcall	# Prefix for host (not target) platform
+DESTDIR=/var/tmp/$NAME-$VERSION
+BUILDDIR=build-$TARGET
+
+tar -xjf $NAME-$VERSION.tar.bz2
+
+SYSROOT=$TROOT/lin64/glibc-2.3.2-95.44
+cd $NAME-$VERSION
+patch -p1 < ../$NAME-$VERSION-modcall.patch
+cd ..
+
+rm -rf $BUILDDIR
+mkdir -p $BUILDDIR
+cd $BUILDDIR
+
+../$NAME-$VERSION/configure \
+   --prefix=$PREFIX         \
+   --disable-nls            \
+   --target=$TARGET         \
+   --with-sysroot=$SYSROOT
+make
+
+make install
+
+cp -p $SYSROOT/{lib/ld-linux.so.2,lib64/ld-linux-x86-64.so.2} $PREFIX/$TARGET/lib

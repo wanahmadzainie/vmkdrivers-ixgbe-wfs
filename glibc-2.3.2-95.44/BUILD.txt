@@ -1,0 +1,25 @@
+# This script will extract the binary rpms under $TROOT/lin64/glibc-2.3.2-95.44
+# Run this script as root.
+
+NAME=glibc
+VERSION=2.3.2-95.44
+TROOT=/build/toolchain
+PREFIX=$TROOT/lin64/$NAME-$VERSION
+
+SRCDIR=$PWD
+
+rm -rf $PREFIX
+mkdir -p $PREFIX
+cd $PREFIX
+
+for i in \
+	glibc-2.3.2-95.44.i686.rpm \
+	glibc-devel-2.3.2-95.44.i386.rpm \
+	glibc-2.3.2-95.44.x86_64.rpm \
+	glibc-devel-2.3.2-95.44.x86_64.rpm \
+	glibc-headers-2.3.2-95.44.x86_64.rpm \
+	glibc-kernheaders-2.4-8.34.2.x86_64.rpm; do
+      rpm2cpio $SRCDIR/binary-rpms/$i | cpio -idm
+done
+
+patch -p1 < $SRCDIR/binary-rpms/glibc-2.3.2-95.44-x86_64.patch

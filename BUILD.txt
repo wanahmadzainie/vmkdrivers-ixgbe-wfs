@@ -1,0 +1,16 @@
+Required system packages:
+
+  grep sed findutils coreutils
+
+These packages are required to be built and installed in their sub-directories,
+in this order, as 'root' (see BUILD.txt in each sub-directory):
+
+  glibc-2.3.2-95.44
+  binutils-2.17.50.0.15-modcall
+  gcc-4.1.2-9
+
+As 'root', build the vmkdrivers-gpl:
+
+1) tar xzf vmkdrivers-gpl.tgz
+
+2) chmod +x build-vmkdrivers.sh && ./build-vmkdrivers.sh

@@ -1,0 +1,60 @@
+# Build requires: 
+#    glibc is installed under $TROOT/lin64/glibc-2.3.2-95.44
+#    binutils is installed under $TROOT/lin32/binutils-2.17.50.0.15-modcall
+# This script will install gcc under $TROOT/lin32/gcc-4.1.2-9
+# Note: Known bug with compilation:
+#    http://gcc.gnu.org/bugzilla/show_bug.cgi?id=24085
+
+NAME=gcc
+VERSION=4.1.2
+TARGET=x86_64-linux
+TROOT=/build/toolchain
+
+PREFIX=$TROOT/lin32/$NAME-$VERSION-9 # Prefix for host (not target) platform
+DESTDIR=/var/tmp/$NAME-$VERSION
+BUILDDIR=build-$TARGET
+export BUVER=2.17.50.0.15-modcall
+BINUTILS=$TROOT/lin32/binutils-$BUVER
+
+tar -xjf $NAME-$VERSION.tar.bz2
+cd $NAME-$VERSION
+patch -p1 < ../gcc-collect2.patch
+patch -p1 < ../gcc-standard_exec_prefix.patch
+patch -p1 < ../gcc-localinclude.patch
+patch -p1 < ../gcc-ldver.patch
+patch -p1 < ../gcc-4.1.2-upstream-bug36093.patch
+cd ..
+
+CONFIG_OPTS="--enable-__cxa_atexit \
+		--with-sysroot=$TROOT/lin64/glibc-2.3.2-95.44 \
+		--enable-clocale=gnu"
+
+rm -rf $BUILDDIR
+mkdir $BUILDDIR
+cd $BUILDDIR
+
+export PATH=$BINUTILS/bin:$PATH
+../$NAME-$VERSION/configure		\
+   --prefix=$PREFIX			\
+   --disable-nls			\
+   --enable-shared			\
+   --enable-threads=posix		\
+   --enable-languages=c    		\
+   --with-gnu-as			\
+   --with-gnu-ld			\
+   --target=$TARGET			\
+   --with-as=$BINUTILS/bin/$TARGET-as	\
+   --with-ld=$BINUTILS/bin/$TARGET-ld	\
+   $CONFIG_OPTS
+make all
+
+
+   rm -rf $PREFIX
+   make install
+   find $PREFIX -type f -name \*.so.\* -exec chmod 755 '{}' \;
+   rm -f $PREFIX/bin/$TARGET-{gcc-$VERSION,c++,$TARGET-*}
+
+mkdir -p $PREFIX/$TARGET || :
+ln -s $BINUTILS/$TARGET/bin $PREFIX/$TARGET
+cd $PREFIX/libexec/gcc/$TARGET/$VERSION
+ln -s ../../../../$TARGET/bin/* .

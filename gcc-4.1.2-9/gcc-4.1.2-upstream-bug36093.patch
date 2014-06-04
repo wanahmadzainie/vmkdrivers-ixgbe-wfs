@@ -1,0 +1,28 @@
+diff -Naur gcc-4.1.2.orig/gcc/gimplify.c gcc-4.1.2/gcc/gimplify.c
+--- gcc-4.1.2.orig/gcc/gimplify.c	2006-11-19 08:15:47.000000000 -0800
++++ gcc-4.1.2/gcc/gimplify.c	2008-05-01 11:22:26.821941856 -0700
+@@ -1425,9 +1425,7 @@
+   /* All checks succeeded.  Build a new node to merge the cast.  */
+   *expr_p = build4 (ARRAY_REF, dctype, obj_expr,
+ 		    TYPE_MIN_VALUE (TYPE_DOMAIN (datype)),
+-		    TYPE_MIN_VALUE (TYPE_DOMAIN (datype)),
+-		    size_binop (EXACT_DIV_EXPR, TYPE_SIZE_UNIT (dctype),
+-				size_int (TYPE_ALIGN_UNIT (dctype))));
++		    NULL_TREE, NULL_TREE);
+   *expr_p = build1 (ADDR_EXPR, ctype, *expr_p);
+ }
+ 
+diff -Naur gcc-4.1.2.orig/gcc/tree-ssa-ccp.c gcc-4.1.2/gcc/tree-ssa-ccp.c
+--- gcc-4.1.2.orig/gcc/tree-ssa-ccp.c	2005-11-22 08:56:48.000000000 -0800
++++ gcc-4.1.2/gcc/tree-ssa-ccp.c	2008-05-01 11:21:29.687026416 -0700
+@@ -1589,9 +1589,7 @@
+   if (!integer_zerop (elt_offset))
+     idx = int_const_binop (PLUS_EXPR, idx, elt_offset, 0);
+ 
+-  return build (ARRAY_REF, orig_type, base, idx, min_idx,
+-		size_int (tree_low_cst (elt_size, 1)
+-			  / (TYPE_ALIGN_UNIT (elt_type))));
++  return build (ARRAY_REF, orig_type, base, idx, NULL_TREE, NULL_TREE);
+ }
+ 
+ 

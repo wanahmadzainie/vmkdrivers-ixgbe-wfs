@@ -1,0 +1,75 @@
+Enable ssh on ESXi (on console: F2, then Troubleshooting Options)
+
+   # copy the tarball, for example:
+   scp drivers.tar.gz 10.116.87.213:/vmfs/volumes/datastore1/.
+
+   # ssh into ESXi, for example:
+   ssh 10.116.87.213
+
+   # cd to datastore and extract drivers
+   cd /vmfs/volumes/datastore1/.
+   tar xzvf drivers.tar.gz
+
+The next steps for updating the drivers are performed by the script install.sh
+distributed in this directory.  Run it after extracting the drivers above.
+This script will iterate over the packaged drivers on ESXi and replace the
+contents with the recompiled ones.
+
+The install.sh script performs the following steps:
+
+* Make a temporary directory in /vmfs/volumes/datastore1/ and go to it
+
+  mkdir –p /vmfs/volumes/datastore1/temp
+  cd /vmfs/volumes/datastore1/temp
+
+* Search for the locations of the current drivers in /vmfs/volumes
+
+  find /vmfs/volumes/ -name "*.v0*"
+
+* For each driver found
+
+  * Copy the driver into the temporary directory
+
+     cp /vmfs/volumes/<driver directory>/<driver name> .
+
+
+  * Use vmtar to extract a tar file
+
+     vmtar  -x <driver name> -o <driver name>.tar  
+ 
+  * Create another temporary directory and  Untar the file into that directory
+
+     mkdir driver_temp 
+     cd driver_temp
+     tar xvf ../<driver name>.tar
+ 
+  * In the extracted output there will be a directory usr/lib/vmware/vmkmod. 
+    If there are any files in the directory /vmfs/volumes/datastore1/with the
+    same name copy these files over.  If not go to the final clean up step as
+    there are no OSS drivers to update.
+
+     cp ../../drivers/<driver name> usr/lib/vmware/vmkmod/
+
+  * Tar the updated directory
+
+     tar cvf .. /<driver name>.tar
+ 
+  * Go up one directory and Vmtar the new tar file
+
+     vmtar -c <driver name>.tar –o <driver name>.new.tar
+ 
+  * Zip up the file new vm tar file
+
+     gzip < <driver name>.new.tar > <driver name>.v00 
+
+
+  * Copy the driver back to its original location
+
+     cp <driver name>.v00 /vmfs/volumes/<driver directory>/<driver name>
+
+
+  * Delete everything in this directory
+
+     rm -rf *
+
+

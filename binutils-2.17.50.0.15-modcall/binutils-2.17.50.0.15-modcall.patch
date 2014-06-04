@@ -1,0 +1,65 @@
+diff -Naur binutils-2.17.50.0.15.orig/gas/struc-symbol.h binutils-2.17.50.0.15/gas/struc-symbol.h
+--- binutils-2.17.50.0.15.orig/gas/struc-symbol.h	2005-11-13 09:16:35.000000000 -0800
++++ binutils-2.17.50.0.15/gas/struc-symbol.h	2008-09-08 15:34:35.781841892 -0700
+@@ -60,6 +60,8 @@
+      a symbol is used in backend routines.  */
+   unsigned int sy_used : 1;
+ 
++  unsigned int force_reloc : 1;
++
+   /* Whether the symbol can be re-defined.  */
+   unsigned int sy_volatile : 1;
+ 
+diff -Naur binutils-2.17.50.0.15.orig/gas/symbols.c binutils-2.17.50.0.15/gas/symbols.c
+--- binutils-2.17.50.0.15.orig/gas/symbols.c	2007-03-16 08:48:29.000000000 -0700
++++ binutils-2.17.50.0.15/gas/symbols.c	2008-09-08 15:34:35.781841892 -0700
+@@ -1966,6 +1966,14 @@
+   return (flags & BSF_FUNCTION) != 0;
+ }
+ 
++void
++S_MY_FORCE_RELOC (symbolS *s)
++{
++   if (S_IS_FUNCTION(s)) {
++      s->force_reloc = 1;
++   }
++}
++
+ int
+ S_IS_EXTERNAL (symbolS *s)
+ {
+@@ -2040,6 +2048,9 @@
+ int
+ S_FORCE_RELOC (symbolS *s, int strict)
+ {
++   if (s->force_reloc) {
++      return TRUE;
++   }
+   if (LOCAL_SYMBOL_CHECK (s))
+     return ((struct local_symbol *) s)->lsy_section == undefined_section;
+ 
+diff -Naur binutils-2.17.50.0.15.orig/gas/symbols.h binutils-2.17.50.0.15/gas/symbols.h
+--- binutils-2.17.50.0.15.orig/gas/symbols.h	2007-03-16 08:48:29.000000000 -0700
++++ binutils-2.17.50.0.15/gas/symbols.h	2008-09-08 15:34:35.791843165 -0700
+@@ -86,6 +86,7 @@
+ extern void S_SET_VALUE (symbolS *, valueT);
+ 
+ extern int S_IS_FUNCTION (symbolS *);
++extern void S_MY_FORCE_RELOC (symbolS *);
+ extern int S_IS_EXTERNAL (symbolS *);
+ extern int S_IS_WEAK (symbolS *);
+ extern int S_IS_WEAKREFR (symbolS *);
+diff -Naur binutils-2.17.50.0.15.orig/gas/write.c binutils-2.17.50.0.15/gas/write.c
+--- binutils-2.17.50.0.15.orig/gas/write.c	2007-04-19 07:14:24.000000000 -0700
++++ binutils-2.17.50.0.15/gas/write.c	2008-09-08 15:34:35.811842361 -0700
+@@ -739,6 +739,10 @@
+ 
+ 	sym = fixp->fx_addsy;
+ 
++	if (fixp->fx_pcrel) {
++	   S_MY_FORCE_RELOC(sym);
++	}
++
+ 	/* All symbols should have already been resolved at this
+ 	   point.  It is possible to see unresolved expression
+ 	   symbols, though, since they are not in the regular symbol
