@@ -3,7 +3,7 @@
 
 NAME=glibc
 VERSION=2.3.2-95.44
-TROOT=/build/toolchain
+TROOT=/opt/vmware-toolchain
 PREFIX=$TROOT/lin64/$NAME-$VERSION
 
 SRCDIR=$PWD

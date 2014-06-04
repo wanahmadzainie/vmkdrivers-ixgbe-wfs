@@ -2,11 +2,13 @@
 #    glibc is installed under $TROOT/lin64/glibc-2.3.2-95.44
 # Installs binutils under $TROOT/lin32/binutils-2.17.50.0.15-modcall
 
+export CFLAGS="-Wno-error=unused-but-set-variable -Wno-error=format-security"
+
 NAME=binutils
 VERSION=2.17.50.0.15
 TARGET=x86_64-linux
 
-TROOT=/build/toolchain
+TROOT=/opt/vmware-toolchain
 PREFIX=$TROOT/lin32/$NAME-$VERSION-modcall	# Prefix for host (not target) platform
 DESTDIR=/var/tmp/$NAME-$VERSION
 BUILDDIR=build-$TARGET

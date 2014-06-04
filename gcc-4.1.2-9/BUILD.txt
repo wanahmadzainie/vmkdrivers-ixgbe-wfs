@@ -8,7 +8,7 @@
 NAME=gcc
 VERSION=4.1.2
 TARGET=x86_64-linux
-TROOT=/build/toolchain
+TROOT=/opt/vmware-toolchain
 
 PREFIX=$TROOT/lin32/$NAME-$VERSION-9 # Prefix for host (not target) platform
 DESTDIR=/var/tmp/$NAME-$VERSION

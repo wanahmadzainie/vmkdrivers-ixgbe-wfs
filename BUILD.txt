@@ -14,3 +14,21 @@ As 'root', build the vmkdrivers-gpl:
 1) tar xzf vmkdrivers-gpl.tgz
 
 2) chmod +x build-vmkdrivers.sh && ./build-vmkdrivers.sh
+
+2014-06-04:
+1) Download and build texinfo-4.9
+$ tar zxvf texinfo-4.9.tar.gz
+$ cd texinfo-4.9
+$ ./configure && make
+$ sudo make install
+$ cd ..
+2) Build and install the toolchain, at /opt/vmware-toolchain
+$ cd glibc-2.3.2-95.44
+$ sudo bash BUILD.txt
+$ cd ..
+$ cd binutils-2.17.50.0.15-modcall
+$ sudo bash BUILD.txt
+$ cd ..
+$ cd gcc-4.1.2-9
+$ sudo bash BUILD.txt
+$ cd ..
