@@ -25,6 +25,9 @@
 #include <linux/module.h>
 
 #include "ixgbe.h"
+#ifdef IXGBE_WFS
+#include "ixgbe_wfs.h"
+#endif /* IXGBE_WFS */
 
 /* This is the only thing that needs to be changed to adjust the
  * maximum number of ports that the driver can manage.
@@ -340,6 +343,20 @@ IXGBE_PARAM(allow_unsupported_sfp, "Allow unsupported and untested "
 	    "SFP+ modules on 82599 based adapters, default 0 = Disable");
 #endif /* __VMKLNX__ */
 
+#ifdef IXGBE_WFS
+/* Workflow Station Identifier
+ *
+ * Valid Range: WFSID_MIN(1) - WFSID_MAX(8)
+ *
+ * Default Value: WFSID_MIN(1)
+ */
+IXGBE_PARAM(WfsId, "Workstation Identifier, range 1..8, default 1");
+
+#define DEFAULT_WFSID		1
+#define MAX_WFSID		WFSID_MAX
+#define MIN_WFSID		WFSID_MIN
+#endif /* IXGBE_WFS */
+
 struct ixgbe_option {
 	enum { enable_option, range_option, list_option } type;
 	const char *name;
@@ -428,7 +445,11 @@ void __devinit ixgbe_check_options(struct ixgbe_adapter *adapter)
 #ifdef __VMKLNX__
 	bool vmdq_default_override = false;
 #endif
+#ifdef IXGBE_WFS
+	int bd = adapter->wfs_parent->index;
+#else
 	int bd = adapter->bd_number;
+#endif /* IXGBE_WFS */
 	u32 *aflags = &adapter->flags;
 	struct ixgbe_ring_feature *feature = adapter->ring_feature;
 	unsigned int vmdq;
@@ -1237,4 +1258,31 @@ void __devinit ixgbe_check_options(struct ixgbe_adapter *adapter)
 #endif
 	}
 #endif /* __VMKLNX__ */
+#ifdef IXGBE_WFS
+	{ /* Workstation Identifier (WfsId) */
+		static struct ixgbe_option opt = {
+			.type = range_option,
+			.name = "Workstation Identifier (WfsId)",
+			.err  = "using default " __MODULE_STRING(WFSID_MIN),
+			.def  = WFSID_MIN,
+			.arg  = { .r = { .min = MIN_WFSID,
+					.max = MAX_WFSID} }
+		};
+		unsigned int id = WfsId[bd];
+
+		if (!adapter->is_wfs_primary)
+			return;
+#ifdef module_param_array
+		if (num_WfsId > bd) {
+#endif
+			ixgbe_validate_option(&id, &opt);
+#ifdef module_param_array
+		} else {
+			id = opt.def;
+			printk(KERN_WARNING "Missing Workstation Identifier(WfsId) option, using default %d\n", id);
+		}
+#endif
+		adapter->wfs_parent->wfs_id = id;
+	}
+#endif /* IXGBE_WFS */
 }

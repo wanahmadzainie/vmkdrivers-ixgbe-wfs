@@ -488,6 +488,10 @@ static int ixgbe_set_vf_lpe(struct ixgbe_adapter *adapter, u32 max_frame, u32 vf
 		u32 reg_offset, vf_shift, vfre;
 		s32 err = 0;
 
+#ifdef IXGBE_WFS
+		pf_max_frame += WFSPKT_MAX_SIZE;
+#endif /* IXGBE_WFS */
+
 #ifdef IXGBE_FCOE
 		if (dev->features & NETIF_F_FCOE_MTU)
 			pf_max_frame = max_t(int, pf_max_frame,
@@ -829,6 +833,9 @@ static int ixgbe_vf_reset_msg(struct ixgbe_adapter *adapter, u32 vf)
 	if (adapter->hw.mac.type == ixgbe_mac_82599EB) {
 		struct net_device *dev = adapter->netdev;
 		int pf_max_frame = dev->mtu + ETH_HLEN;
+#ifdef IXGBE_WFS
+		pf_max_frame += WFSPKT_MAX_SIZE;
+#endif /* IXGBE_WFS */
 
 #ifdef IXGBE_FCOE
 		if (dev->features & NETIF_F_FCOE_MTU)

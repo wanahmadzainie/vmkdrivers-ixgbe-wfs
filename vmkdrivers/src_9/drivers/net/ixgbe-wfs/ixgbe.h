@@ -72,11 +72,17 @@
 
 #include "ixgbe_common.h"
 
+#ifdef IXGBE_WFS
+#include "ixgbe_wfs.h"
+#define DPRINTK(nlevel, klevel, fmt, args...) \
+	printk(KERN_INFO "%s: %s: " fmt, adapter->wfs_parent->name, __func__, ## args)
+#else
 #define PFX "ixgbe: "
 #define DPRINTK(nlevel, klevel, fmt, args...) \
 	((void)((NETIF_MSG_##nlevel & adapter->msg_enable) && \
 	printk(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
 		__func__ , ## args)))
+#endif /* IXGBE_WFS */
 #ifdef __VMKLNX__
 
 #define NETIF_MSG_VIRT			0x8000
@@ -91,6 +97,15 @@
 #define IXGBE_DEFAULT_TXD		512
 #define IXGBE_DEFAULT_TX_WORK		256
 #endif /* __VMKLNX__ */
+#ifdef IXGBE_WFS
+#define IXGBE_MAX_TXD			8192
+#define IXGBE_MIN_TXD			64
+
+#define IXGBE_DEFAULT_RXD		1024
+#define IXGBE_DEFAULT_RX_WORK		512
+#define IXGBE_MAX_RXD			8192
+#define IXGBE_MIN_RXD			64
+#else
 #define IXGBE_MAX_TXD			4096
 #define IXGBE_MIN_TXD			64
 
@@ -98,6 +113,7 @@
 #define IXGBE_DEFAULT_RX_WORK		256
 #define IXGBE_MAX_RXD			4096
 #define IXGBE_MIN_RXD			64
+#endif /* IXGBE_WFS */
 
 #ifdef __VMKLNX__
 #define IXGBE_JUMBO_FRAME_DEFAULT_RXD	512
@@ -126,7 +142,11 @@
 
 /* Supported Rx Buffer Sizes */
 #define IXGBE_RXBUFFER_256       256  /* Used for skb receive header */
-#define IXGBE_RXBUFFER_2K	2048
+#ifdef IXGBE_WFS
+#define IXGBE_RXBUFFER_512  512
+#define IXGBE_RXBUFFER_1K   1024
+#endif /* IXGBE_WFS */
+#define IXGBE_RXBUFFER_2K   2048
 #define IXGBE_RXBUFFER_3K	3072
 #define IXGBE_RXBUFFER_4K	4096
 #define IXGBE_RXBUFFER_1536	1536
@@ -143,7 +163,11 @@
  * Since netdev_alloc_skb now allocates a page fragment we can use a value
  * of 256 and the resultant skb will have a truesize of 960 or less.
  */
+#ifdef IXGBE_WFS
+#define IXGBE_RX_HDR_SIZE   IXGBE_RXBUFFER_1K
+#else
 #define IXGBE_RX_HDR_SIZE	IXGBE_RXBUFFER_256
+#endif /* IXGBE_WFS */
 
 #define MAXIMUM_ETHERNET_VLAN_SIZE	(VLAN_ETH_FRAME_LEN + ETH_FCS_LEN)
 
@@ -727,6 +751,15 @@ struct ixgbe_therm_proc_data {
 
 /* board specific private data structure */
 struct ixgbe_adapter {
+#ifdef IXGBE_WFS
+	char name[IFNAMSIZ];
+	spinlock_t xmit_lock;
+	bool is_wfs_primary;
+	struct ixgbe_wfs_adapter *wfs_parent;
+	struct ixgbe_adapter *wfs_next;
+	struct ixgbe_adapter *wfs_other;
+	u8 wfs_port;	/* devfn & 0x7 */
+#endif /* IXGBE_WFS */
 #if defined(NETIF_F_HW_VLAN_TX) || defined(NETIF_F_HW_VLAN_CTAG_TX)
 #ifdef HAVE_VLAN_RX_REGISTER
 	struct vlan_group *vlgrp; /* must be first, see ixgbe_receive_skb */
@@ -1195,4 +1228,10 @@ void ixgbe_vlan_mode(struct net_device *, u32);
 void ixgbe_sriov_reinit(struct ixgbe_adapter *adapter);
 
 void ixgbe_set_rx_drop_en(struct ixgbe_adapter *adapter);
+
+
+#ifdef IXGBE_WFS
+extern netdev_tx_t ixgbe_xmit_wfs_frame(struct sk_buff *skb,
+					struct ixgbe_adapter *adapter);
+#endif /* IXGBE_WFS */
 #endif /* _IXGBE_H_ */

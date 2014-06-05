@@ -367,6 +367,14 @@ static int ixgbe_set_settings(struct net_device *netdev,
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32 advertised, old;
 	s32 err = 0;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+#endif /* IXGBE_WFS */
 
 	if ((hw->phy.media_type == ixgbe_media_type_copper) ||
 	    (hw->phy.multispeed_fiber)) {
@@ -414,6 +422,10 @@ static int ixgbe_set_settings(struct net_device *netdev,
 			return -EINVAL;
 	}
 
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
+
 	return err;
 }
 
@@ -445,6 +457,15 @@ static int ixgbe_set_pauseparam(struct net_device *netdev,
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_fc_info fc = hw->fc;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+		fc = hw->fc;
+#endif /* IXGBE_WFS */
 
 	/* 82598 does no support link flow control with DCB enabled */
 	if ((hw->mac.type == ixgbe_mac_82598EB) &&
@@ -477,6 +498,10 @@ static int ixgbe_set_pauseparam(struct net_device *netdev,
 			ixgbe_reset(adapter);
 	}
 
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
+
 	return 0;
 }
 
@@ -490,6 +515,9 @@ static void ixgbe_set_msglevel(struct net_device *netdev, u32 data)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	adapter->msg_enable = data;
+#ifdef IXGBE_WFS
+	adapter->wfs_other->msg_enable = data;
+#endif /* IXGBE_WFS */
 }
 
 static int ixgbe_get_regs_len(struct net_device *netdev)
@@ -868,6 +896,14 @@ static int ixgbe_set_eeprom(struct net_device *netdev,
 	void *ptr;
 	int max_len, first_word, last_word, ret_val = 0;
 	u16 i;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+#endif /* IXGBE_WFS */
 
 	if (eeprom->len == 0)
 		return -EINVAL;
@@ -926,6 +962,9 @@ static int ixgbe_set_eeprom(struct net_device *netdev,
 
 err:
 	kfree(eeprom_buff);
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 	return ret_val;
 }
 
@@ -978,6 +1017,13 @@ static int ixgbe_set_ringparam(struct net_device *netdev,
 	struct ixgbe_ring *temp_ring;
 	int i, err = 0;
 	u32 new_rx_count, new_tx_count;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+#endif /* IXGBE_WFS */
 
 	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
 		return -EINVAL;
@@ -1098,6 +1144,9 @@ err_setup:
 	vfree(temp_ring);
 clear_reset:
 	clear_bit(__IXGBE_RESETTING, &adapter->state);
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 	return err;
 }
 
@@ -1146,6 +1195,10 @@ static void ixgbe_get_ethtool_stats(struct net_device *netdev,
 	char *p;
 
 	ixgbe_update_stats(adapter);
+#ifdef IXGBE_WFS
+	/* stats will be in netdev if HAVE_NETDEV_STATS_IN_NETDEV, or in adapter (primary) */
+	ixgbe_update_stats(adapter->wfs_other);
+#endif
 
 	for (i = 0; i < IXGBE_NETDEV_STATS_LEN; i++) {
 		p = (char *)net_stats + ixgbe_gstrings_net_stats[i].stat_offset;
@@ -1453,6 +1506,14 @@ reg_set_and_check(struct ixgbe_adapter *adapter, u32 r, u32 m, u32 w, u64 *data)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32 val, before;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+#endif /* IXGBE_WFS */
 
 	if (IXGBE_REMOVED(hw->hw_addr)) {
 		*data = 1;
@@ -1470,6 +1531,9 @@ reg_set_and_check(struct ixgbe_adapter *adapter, u32 r, u32 m, u32 w, u64 *data)
 		return 1;
 	}
 	IXGBE_WRITE_REG(hw, r, before);
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 	return 0;
 }
 
@@ -2064,6 +2128,15 @@ static void ixgbe_diag_test(struct net_device *netdev,
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	bool if_running = netif_running(netdev);
 	struct ixgbe_hw *hw = &adapter->hw;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+		e_info(hw, "diagnost test adapter : %s\n", adapter->name);
+#endif /* IXGBE_WFS */
 
 	if (IXGBE_REMOVED(hw->hw_addr)) {
 		e_err(hw, "Adapter removed - test blocked\n");
@@ -2183,6 +2256,9 @@ skip_loopback:
 
 skip_ol_tests:
 	msleep_interruptible(4 * 1000);
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 }
 
 static int ixgbe_wol_exclusion(struct ixgbe_adapter *adapter,
@@ -2228,6 +2304,14 @@ static int ixgbe_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	struct ixgbe_hw *hw = &adapter->hw;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+#endif /* IXGBE_WFS */
 
 	if (wol->wolopts & (WAKE_PHY | WAKE_ARP | WAKE_MAGICSECURE))
 		return -EOPNOTSUPP;
@@ -2250,6 +2334,10 @@ static int ixgbe_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
 
 	device_set_wakeup_enable(pci_dev_to_dev(adapter->pdev), adapter->wol);
 
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
+
 	return 0;
 }
 
@@ -2258,7 +2346,14 @@ static int ixgbe_nway_reset(struct net_device *netdev)
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 
 	if (netif_running(netdev))
+#ifdef IXGBE_WFS
+	{
+#endif /* IXGBE_WFS */
 		ixgbe_reinit_locked(adapter);
+#ifdef IXGBE_WFS
+		ixgbe_reinit_locked(adapter->wfs_other);
+	}
+#endif /* IXGBE_WFS */
 
 	return 0;
 }
@@ -2269,6 +2364,14 @@ static int ixgbe_set_phys_id(struct net_device *netdev,
 {
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	struct ixgbe_hw *hw = &adapter->hw;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+#endif /* IXGBE_WFS */
 
 	switch (state) {
 	case ETHTOOL_ID_ACTIVE:
@@ -2289,6 +2392,9 @@ static int ixgbe_set_phys_id(struct net_device *netdev,
 		break;
 	}
 
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 	return 0;
 }
 #else
@@ -2298,6 +2404,15 @@ static int ixgbe_phys_id(struct net_device *netdev, u32 data)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32 led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
 	u32 i;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+		hw = &adapter->hw;
+		led_reg = IXGBE_READ_REG(hw, IXGBE_LEDCTL);
+#endif /* IXGBE_WFS */
 
 	if (!data || data > 300)
 		data = 300;
@@ -2311,6 +2426,10 @@ static int ixgbe_phys_id(struct net_device *netdev, u32 data)
 
 	/* Restore LED settings */
 	IXGBE_WRITE_REG(hw, IXGBE_LEDCTL, led_reg);
+
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 
 	return 0;
 }
@@ -2359,6 +2478,9 @@ static bool ixgbe_update_rsc(struct ixgbe_adapter *adapter)
 	    adapter->rx_itr_setting > IXGBE_MIN_RSC_ITR) {
 		if (!(adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)) {
 			adapter->flags2 |= IXGBE_FLAG2_RSC_ENABLED;
+#ifdef IXGBE_WFS
+			adapter->wfs_other->flags2 |= IXGBE_FLAG2_RSC_ENABLED;
+#endif /* IXGBE_WFS */
 			e_info(probe, "rx-usecs value high enough "
 				      "to re-enable RSC\n");
 			return true;
@@ -2366,6 +2488,9 @@ static bool ixgbe_update_rsc(struct ixgbe_adapter *adapter)
 	/* if interrupt rate is too high then disable RSC */
 	} else if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED) {
 		adapter->flags2 &= ~IXGBE_FLAG2_RSC_ENABLED;
+#ifdef IXGBE_WFS
+		adapter->wfs_other->flags2 &= ~IXGBE_FLAG2_RSC_ENABLED;
+#endif /* IXGBE_WFS */
 		e_info(probe, "rx-usecs set too low, disabling RSC\n");
 		return true;
 	}
@@ -2383,6 +2508,13 @@ static int ixgbe_set_coalesce(struct net_device *netdev,
 	u16  tx_itr_prev;
 #endif
 	bool need_reset = false;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
+
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+#endif /* IXGBE_WFS */
 
 #ifdef __VMKLNX__
 	/* ESX vmkernel needs tx coalesce params for NETIOC feature */
@@ -2460,6 +2592,9 @@ static int ixgbe_set_coalesce(struct net_device *netdev,
 			q_vector->itr = rx_itr_param;
 		ixgbe_write_eitr(q_vector);
 	}
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
 
 	/*
 	 * do reset here at the end to make sure EITR==0 case is handled
@@ -2493,6 +2628,9 @@ static int ixgbe_set_rx_csum(struct net_device *netdev, u32 data)
 
 		if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED) {
 			adapter->flags2 &= ~IXGBE_FLAG2_RSC_ENABLED;
+#ifdef IXGBE_WFS
+			adapter->wfs_other->flags2 &= ~IXGBE_FLAG2_RSC_ENABLED;
+#endif /* IXGBE_WFS */
 			ixgbe_do_reset(netdev);
 		}
 	}
@@ -2557,6 +2695,9 @@ static int ixgbe_set_tso(struct net_device *netdev, u32 data)
 
 			v_netdev->features &= ~feature_list;
 			vlan_group_set_device(adapter->vlgrp, i, v_netdev);
+#ifdef IXGBE_WFS
+			vlan_group_set_device(adapter->wfs_other->vlgrp, i, v_netdev);
+#endif /* IXGBE_WFS */
 		}
 	}
 
@@ -2624,6 +2765,9 @@ static int ixgbe_set_flags(struct net_device *netdev, u32 data)
 			       "disabling RSC\n");
 		}
 	}
+#ifdef IXGBE_WFS
+	adapter->wfs_other->flags2 = adapter->flags2;
+#endif /* IXGBE_WFS */
 
 #ifdef ETHTOOL_GRXRINGS
 	/*
@@ -2665,6 +2809,9 @@ static int ixgbe_set_flags(struct net_device *netdev, u32 data)
 		adapter->flags |= IXGBE_FLAG_FDIR_HASH_CAPABLE;
 		break;
 	}
+#ifdef IXGBE_WFS
+	adapter->wfs_other->flags = adapter->flags;
+#endif /* IXGBE_WFS */
 
 #endif /* ETHTOOL_GRXRINGS */
 	if (need_reset)
@@ -3196,12 +3343,21 @@ static int ixgbe_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
 	switch (cmd->cmd) {
 	case ETHTOOL_SRXCLSRLINS:
 		ret = ixgbe_add_ethtool_fdir_entry(adapter, cmd);
+#ifdef IXGBE_WFS
+		ret = ixgbe_add_ethtool_fdir_entry(adapter->wfs_other, cmd);
+#endif /* IXGBE_WFS */
 		break;
 	case ETHTOOL_SRXCLSRLDEL:
 		ret = ixgbe_del_ethtool_fdir_entry(adapter, cmd);
+#ifdef IXGBE_WFS
+		ret = ixgbe_del_ethtool_fdir_entry(adapter->wfs_other, cmd);
+#endif /* IXGBE_WFS */
 		break;
 	case ETHTOOL_SRXFH:
 		ret = ixgbe_set_rss_hash_opt(adapter, cmd);
+#ifdef IXGBE_WFS
+		ret = ixgbe_set_rss_hash_opt(adapter->wfs_other, cmd);
+#endif /* IXGBE_WFS */
 		break;
 	default:
 		break;
@@ -3304,6 +3460,9 @@ static int ixgbe_set_channels(struct net_device *dev,
 	struct ixgbe_adapter *adapter = netdev_priv(dev);
 	unsigned int count = ch->combined_count;
 	u8 max_rss_indices = ixgbe_max_rss_indices(adapter);
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif /* IXGBE_WFS */
 
 	/* verify they are not requesting separate vectors */
 	if (!count || ch->rx_count || ch->tx_count)
@@ -3317,6 +3476,9 @@ static int ixgbe_set_channels(struct net_device *dev,
 	if (count > ixgbe_max_channels(adapter))
 		return -EINVAL;
 
+#ifdef IXGBE_WFS
+	for (adapter=iwa->primary; adapter; adapter=adapter->wfs_next) {
+#endif /* IXGBE_WFS */
 	/* update feature limits from largest to smallest supported values */
 	adapter->ring_feature[RING_F_FDIR].limit = count;
 
@@ -3332,6 +3494,10 @@ static int ixgbe_set_channels(struct net_device *dev,
 	adapter->ring_feature[RING_F_FCOE].limit = count;
 
 #endif
+#ifdef IXGBE_WFS
+	}
+#endif /* IXGBE_WFS */
+
 	/* use setup TC to update any traffic class queue mapping */
 	return ixgbe_setup_tc(dev, netdev_get_num_tc(dev));
 }

@@ -391,6 +391,10 @@ static u8 ixgbe_dcbnl_set_all(struct net_device *netdev)
 		int i;
 #endif
 
+#ifdef IXGBE_WFS
+		max_frame += WFSPKT_MAX_SIZE;
+#endif /* IXGBE_WFS */
+
 #ifdef IXGBE_FCOE
 		if (adapter->netdev->features & NETIF_F_FCOE_MTU)
 			max_frame = max(max_frame, IXGBE_FCOE_JUMBO_FRAME_SIZE);
