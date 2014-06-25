@@ -47,11 +47,11 @@
  * to use only two TCs one for fcoe and other for LAN
  *
  */
-static u8 ixgbe_adjust_dcb_cfg(struct net_device *netdev,
+static void ixgbe_adjust_dcb_cfg(struct net_device *netdev,
 			       struct ixgbe_dcb_config *dcb_cfg)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	u8 tc, bw_pct, bwg_id, pfc_setting;
+	u8 tc, bw_pct, /*bwg_id,*/ pfc_setting;
 	int i, j;
 
 	tc = ixgbe_dcb_get_tc_from_up(&adapter->temp_dcb_cfg, 0, adapter->fcoe.up);

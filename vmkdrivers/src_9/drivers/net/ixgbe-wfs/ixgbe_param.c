@@ -25,6 +25,7 @@
 #include <linux/module.h>
 
 #include "ixgbe.h"
+#include "ixgbe_vmdq.h"
 #ifdef IXGBE_WFS
 #include "ixgbe_wfs.h"
 #endif /* IXGBE_WFS */

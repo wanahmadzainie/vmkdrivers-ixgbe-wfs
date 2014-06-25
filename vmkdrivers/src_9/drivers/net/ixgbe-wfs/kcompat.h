@@ -185,9 +185,11 @@ struct msix_entry {
 #define NETIF_F_SCTP_CSUM 0
 #endif
 
+#ifndef __VMKLNX__
 #ifndef NETIF_F_LRO
 #define NETIF_F_LRO (1 << 15)
 #endif
+#endif /* __VMKLNX__ */
 
 #ifndef NETIF_F_NTUPLE
 #define NETIF_F_NTUPLE (1 << 27)
@@ -233,8 +235,10 @@ struct msix_entry {
 #define num_online_cpus() smp_num_cpus
 #endif
 
+#ifndef __VMKLNX__
 #ifndef cpu_online
 #define cpu_online(cpuid) test_bit((cpuid), &cpu_online_map)
+#endif
 #endif
 
 #ifndef _LINUX_RANDOM_H
@@ -268,9 +272,11 @@ struct msix_entry {
 #define DCA_PROVIDER_REMOVE  0x0002
 #endif
 
+#ifndef __VMKLNX__
 #ifndef DCA_GET_TAG_TWO_ARGS
 #define dca3_get_tag(a,b) dca_get_tag(b)
 #endif
+#endif /* __VMKLNX __ */
 
 #ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 #if defined(__i386__) || defined(__x86_64__)
@@ -2454,9 +2460,11 @@ static inline __u32 _kc_ethtool_cmd_speed(struct ethtool_cmd *ep)
 #endif
 #define dma_mapping_error(dev, dma_addr) pci_dma_mapping_error(dma_addr)
 
+#ifndef __VMKLNX__
 #ifdef CONFIG_NETDEVICES_MULTIQUEUE
 #define HAVE_TX_MQ
 #endif
+#endif /* __VMKLNX__ */
 
 #define HAVE_TX_MQ 1
 #define NETIF_F_MULTI_QUEUE 0
@@ -2548,7 +2556,9 @@ extern void _kc_pci_clear_master(struct pci_dev *dev);
 #if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30) )
 #define skb_rx_queue_recorded(a) false
 #define skb_get_rx_queue(a) 0
+#ifndef __VMKLNX__
 #define skb_record_rx_queue(a, b) do {} while (0)
+#endif /* __VMKLNX__ */
 #define skb_tx_hash(n, s) ___kc_skb_tx_hash((n), (s), (n)->real_num_tx_queues)
 #ifndef pr_cont
 #define pr_cont(fmt, ...) \

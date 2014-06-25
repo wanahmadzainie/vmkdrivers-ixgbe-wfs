@@ -39,14 +39,17 @@
 #include "ixgbe.h"
 #include "ixgbe_type.h"
 #include "ixgbe_sriov.h"
+#include "ixgbe_vmdq.h"
 
-#if defined(IFLA_VF_MAX) && defined(__VMKLNX__)
+#ifdef __VMKLNX__
 #define pci_enable_sriov(dev,vfs) \
 	(vmklnx_enable_vfs((dev), (vfs), NULL, NULL) != (vfs) ? -ENOTSUPP : 0)
 
 #define pci_disable_sriov(dev) \
 	vmklnx_disable_vfs((dev), adapter->num_vfs, NULL, NULL)
+#endif /* __VMKLNX */
 
+#if defined(IFLA_VF_MAX) && defined(__VMKLNX__)
 static VMK_ReturnStatus ixgbe_passthru_ops(struct net_device *netdev,
 						vmk_NetPTOP op,
 						void *pargs)
@@ -690,6 +693,7 @@ static int ixgbe_get_vf_queues(struct ixgbe_adapter *adapter,
 	return 0;
 }
 
+#ifndef __VMKLNX__
 static int ixgbe_set_vf_macvlan(struct ixgbe_adapter *adapter,
 				int vf, int index, unsigned char *mac_addr)
 {
@@ -746,6 +750,7 @@ static int ixgbe_set_vf_macvlan(struct ixgbe_adapter *adapter,
 
 	return retval;
 }
+#endif /* __VMKLNX */
 
 int ixgbe_vf_configuration(struct pci_dev *pdev, unsigned int event_mask)
 {

@@ -29,6 +29,8 @@
 
 
 #ifdef __VMKLNX__
+int ixgbe_configure_rss_filter(struct net_device *netdev, u8* mac);
+
 int ixgbe_compare_esx_product_version(char* version)
 {
 	int ret = -1;
@@ -187,7 +189,7 @@ static int ixgbe_alloc_rx_queue(struct net_device *netdev,
 				vmknetddi_queueops_queue_features_t feat)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_ring_feature *f = &adapter->ring_feature;
+	//struct ixgbe_ring_feature *f = &adapter->ring_feature;
 	int pool;
 	int base_queue;
 	int netq_count = ixgbe_get_netq_count(adapter);
@@ -469,7 +471,7 @@ static int ixgbe_apply_rx_filter(vmknetddi_queueop_apply_rx_filter_args_t *args)
 	int base_queue = pool * adapter->num_rx_queues_per_pool;
 	u16 vid = 0;
 	s32 vlvf_ind = 0;
-	int index, ret;
+	int index = 0, ret;
 
 	if (!VMKNETDDI_QUEUEOPS_IS_RX_QUEUEID(args->queueid)) {
 		DPRINTK(PROBE, ERR, "not an rx queue 0x%x\n", args->queueid);
@@ -590,6 +592,7 @@ static int ixgbe_apply_rx_filter(vmknetddi_queueop_apply_rx_filter_args_t *args)
 			return VMKNETDDI_QUEUEOPS_ERR;
 		}
 		break;
+	default: break;
 	}
 
 	adapter->rx_ring[base_queue]->active++;
@@ -639,7 +642,7 @@ static int ixgbe_remove_rx_filter(
 	struct ixgbe_adapter *adapter = netdev_priv(args->netdev);
 	struct ixgbe_hw *hw = &adapter->hw;
 	int base_queue = 0;
-	int index, err;
+	int index/*, err*/;
 	u16 pool = VMKNETDDI_QUEUEOPS_QUEUEID_VAL(args->queueid);
 	u16 fid = VMKNETDDI_QUEUEOPS_FILTERID_VAL(args->filterid);
 	u8 fpool = 0;
@@ -719,6 +722,7 @@ static int ixgbe_remove_rx_filter(
 	case ixgbe_mac_82598EB:
 		ixgbe_del_mac_filter_by_index(adapter, index);
 		break;
+	default: break;
 	}
 
 	adapter->rx_ring[base_queue]->active--;
@@ -846,6 +850,7 @@ static int ixgbe_get_supported_feature(
 	case ixgbe_mac_82598EB:
 		args->features |= VMKNETDDI_QUEUEOPS_QUEUE_FEAT_PAIR;
 		break;
+	default: break;
 	}
 
 #ifdef VMX86_DEBUG
@@ -863,7 +868,7 @@ static int ixgbe_get_supported_filter_class(
 			vmknetddi_queueop_get_sup_filter_class_args_t *args)
 {
 	struct ixgbe_adapter *adapter = netdev_priv(args->netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+	//struct ixgbe_hw *hw = &adapter->hw;
 	if (adapter->num_vfs) {
 		args->class = VMKNETDDI_QUEUEOPS_FILTER_VLANMACADDR |
 				VMKNETDDI_QUEUEOPS_FILTER_MACADDR;

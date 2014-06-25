@@ -94,6 +94,10 @@ static const char ixgbe_wfs_copyright[] =
 				"Copyright (c) 2013-2014 Power-All Networks, Inc.";
 #endif /* IXGBE_WFS */
 
+#ifdef __VMKLNX__
+int ixgbe_reinit_locked_change_queues(struct ixgbe_adapter *adapter);
+#endif /* __VMKLNX__ */
+
 /* ixgbe_pci_tbl - PCI Device ID Table
  *
  * Wildcard entries (PCI_ANY_ID) should come last
@@ -295,7 +299,7 @@ static void ixgbe_check_minimum_link(struct ixgbe_adapter *adapter,
  **/
 static inline int ixgbe_enumerate_functions(struct ixgbe_adapter *adapter)
 {
-	struct list_head *entry;
+	//struct list_head *entry;
 	int physfns = 0;
 
 	/* Some cards can not use the generic count PCIe functions method,
@@ -1295,6 +1299,7 @@ static void ixgbe_receive_skb(struct ixgbe_q_vector *q_vector,
 }
 
 #endif /* HAVE_VLAN_RX_REGISTER */
+#ifndef __VMKLNX__
 #if !defined(CONFIG_IXGBE_DISABLE_PACKET_SPLIT) || defined(NETIF_F_GSO)
 /**
  * ixgbe_get_headlen - determine size of header for RSC/LRO/GRO/FCOE
@@ -1427,6 +1432,7 @@ static unsigned int ixgbe_get_headlen(unsigned char *data,
 }
 
 #endif /* !CONFIG_IXGBE_DISABLE_PACKET_SPLIT || NETIF_F_GSO */
+#endif /* __VMKLNX__ */
 #ifdef NETIF_F_GSO
 static void ixgbe_set_rsc_gso_size(struct ixgbe_ring *ring,
 				   struct sk_buff *skb)
@@ -3406,7 +3412,7 @@ void ixgbe_configure_rx_ring(struct ixgbe_adapter *adapter,
 static void ixgbe_setup_psrtype(struct ixgbe_adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int rss_i = adapter->ring_feature[RING_F_RSS].indices;
+	//int rss_i = adapter->ring_feature[RING_F_RSS].indices;
 	int p;
 
 	/* PSRTYPE must be initialized in non 82598 adapters */
@@ -6027,12 +6033,14 @@ static int ixgbe_open(struct net_device *netdev)
 #endif /* IXGBE_WFS */
 	return 0;
 
+#ifndef __VMKLNX__
 err_set_queues:
 #ifdef IXGBE_WFS
     if (adapter == iwa->secondary)
         ixgbe_free_irq(iwa->primary);
 #endif
 	ixgbe_free_irq(adapter);
+#endif /* __VMKLNX__ */
 err_req_irq:
 #ifdef IXGBE_WFS
     if (adapter == iwa->secondary)
@@ -9066,7 +9074,9 @@ static int __devinit ixgbe_probe(struct pci_dev *pdev,
 	u16 build, major, patch;
 	char *info_string, *i_s_var;
 	u8 part_str[IXGBE_PBANUM_LENGTH];
+#ifndef __VMKLNX__
 	enum ixgbe_mac_type mac_type = ixgbe_mac_unknown;
+#endif /* __VMKLNX__ */
 #ifdef HAVE_TX_MQ
 #ifdef __VMKLNX__
 	unsigned int indices = IXGBE_MAX_VMDQ_INDICES;

@@ -100,8 +100,9 @@ static inline void _kc_skb_trim(struct sk_buff *skb, unsigned int len)
 #define dca_register_notify(x)
 
 #define USE_REBOOT_NOTIFIER
+#ifdef CONFIG_PM
 #define device_set_wakeup_enable(d, w) device_init_wakeup(d, w);
-
+#endif /* CONFIG_PM */
 
 
 #define nr_cpu_ids      smp_num_cpus 

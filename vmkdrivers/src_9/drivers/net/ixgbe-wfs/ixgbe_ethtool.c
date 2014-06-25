@@ -3851,7 +3851,7 @@ int ixgbe_intelcim_ioctl(struct net_device *netdev, struct ifreq *ifr)
 	struct ixgbe_intelcim_ioctl_req req;
 	struct ixgbe_adapter *adapter = netdev_priv(netdev);
 	int ret = 0;
-	int bytes_left = 0;
+	//int bytes_left = 0;
 
 	if (copy_from_user(&req, useraddr, sizeof(req))) {
 		DPRINTK(DRV, ERR, "Cannot copy memory from user space\n");

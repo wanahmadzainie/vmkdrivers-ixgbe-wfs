@@ -22,6 +22,7 @@
 *******************************************************************************/
 
 #include "ixgbe.h"
+#include "ixgbe_cna.h"
 #include "ixgbe_sriov.h"
 
 #ifdef HAVE_TX_MQ
@@ -573,7 +574,7 @@ static bool ixgbe_set_dcb_queues(struct ixgbe_adapter *adapter)
  **/
 static bool ixgbe_set_vmdq_queues(struct ixgbe_adapter *adapter)
 {
-	u16 vmdq_i = adapter->ring_feature[RING_F_VMDQ].limit;
+	/*u16*/int vmdq_i = adapter->ring_feature[RING_F_VMDQ].limit;
 	u16 vmdq_m = 0;
 	u16 rss_i = adapter->ring_feature[RING_F_RSS].limit;
 	u16 rss_m = IXGBE_RSS_DISABLED_MASK;
@@ -889,7 +890,7 @@ static void ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter,
 #ifdef __VMKLNX__
 int ixgbe_calculate_rx_ring_size(struct ixgbe_adapter *adapter)
 {
-	u32 rx_count = IXGBE_DEFAULT_RXD;
+	/*u32*/int rx_count = IXGBE_DEFAULT_RXD;
 
 	if (adapter->netdev->mtu > ETH_DATA_LEN) {
 		rx_count = min(IXGBE_MAX_RXD / adapter->num_rx_queues,

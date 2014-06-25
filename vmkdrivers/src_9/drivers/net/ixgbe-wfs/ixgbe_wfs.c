@@ -25,6 +25,7 @@
 #include <linux/if_bridge.h>
 #endif /* __VMKLNX__ */
 
+#include <linux/ktime.h>
 #include "ixgbe_wfs.h"
 
 /*

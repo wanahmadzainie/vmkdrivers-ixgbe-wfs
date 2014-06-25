@@ -62,11 +62,11 @@ static int ixgbe_cna_change_mtu(struct net_device *cnadev, int new_mtu)
 int ixgbe_cna_enable(struct ixgbe_adapter *adapter)
 {
 	struct net_device *cnadev;
-	struct net_device *netdev;
-	int i, err;
-	u64 wwpn;
-	u64 wwnn;
-	u16 device_caps;
+	struct net_device *netdev = adapter->netdev;
+	int /*i,*/ err;
+	//u64 wwpn;
+	//u64 wwnn;
+	//u16 device_caps;
 
 	/*
 	 * Oppositely to regular net device, CNA device doesn't have

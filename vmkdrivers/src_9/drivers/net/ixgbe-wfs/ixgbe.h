@@ -1229,6 +1229,9 @@ void ixgbe_sriov_reinit(struct ixgbe_adapter *adapter);
 
 void ixgbe_set_rx_drop_en(struct ixgbe_adapter *adapter);
 
+#ifdef __VMKLNX__
+int ixgbe_calculate_rx_ring_size(struct ixgbe_adapter *adapter);
+#endif /* __VMKLNX__ */
 
 #ifdef IXGBE_WFS
 extern netdev_tx_t ixgbe_xmit_wfs_frame(struct sk_buff *skb,
