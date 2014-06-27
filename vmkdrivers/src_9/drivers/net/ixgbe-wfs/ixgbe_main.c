@@ -87,7 +87,7 @@ static const char ixgbe_copyright[] =
 static const char ixgbe_wfs_driver_string[] =
 				"Power-All(R) Workflow Ethernet Ring Network Driver";
 
-#define WFS_DRV_VERSION __stringify(3.21.2-1.0.1)
+#define WFS_DRV_VERSION __stringify(3.21.4-1.0.1)
 
 const char ixgbe_wfs_driver_version[] = WFS_DRV_VERSION;
 static const char ixgbe_wfs_copyright[] =
@@ -9762,7 +9762,6 @@ no_info_string:
 	    iwa->primary = adapter;
 	    iwa->state = partial_initialized;
 	    memcpy(iwa->mac_addr, netdev->dev_addr, netdev->addr_len);
-
 	} else {
 	    spin_lock_init(&adapter->xmit_lock);
         iwa->secondary = adapter;

@@ -20,11 +20,15 @@
 #define WFS_DATASEQ
 #define WFS_FIB
 #define WFS_IOC
-#define WFS_BERT
+//#define WFS_BERT
 
 #define IXGBE_MAX_WFS_NIC   2   /* max WFS NIC allowed */
 
+#ifdef __VMKLNX__
+#define	WFS_DEVNAME_FMT		"vmring%d"
+#else
 #define WFS_DEVNAME_FMT     "ring%d"
+#endif
 
 #define MIN(a,b)    ((a)<(b)) ? (a) : (b)
 #define MAX(a,b)    ((a)>(b)) ? (a) : (b)

@@ -88,7 +88,7 @@ EXPORT_SYMBOL(ns_to_timeval);
 /*
  *  Interface functions
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18)
 static void bert_request_main(ulong data)
 {
     struct wfs_bert_ctrl *wk = (struct wfs_bert_ctrl *)data;

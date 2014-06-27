@@ -546,7 +546,13 @@ void ixgbe_wfs_send_bert(struct ixgbe_wfs_adapter *iwa, u8 wfsid)
     wfspkt = (struct wfspkt *)skb->data;
     wfsopt = wfspkt_getopt((struct wfspkt *)wfspkt, WFSOPT_BERT);
     wfsopt->val.bert.seqno = ++myBertSeqNo;
+#ifndef __VMKLNX__
     wfsopt->val.bert.ts = ktime_to_us(ktime_get_real());
+#else
+	struct timespec ts;
+	ktime_get_real_ts(&ts);
+	wfsopt->val.bert.ts = ktime_to_ns(timespec_to_ktime(ts));
+#endif /* __VMKLNX__ */
 
     /* first 5 packets to reset responder data/stats, no response required */
     if (myBertSeqNo <= 5) {
@@ -797,7 +803,14 @@ static void wfs_process_bert(struct ixgbe_wfs_adapter *iwa, struct ixgbe_adapter
             return;
 
         bertcfg->jfs_last = jiffies;
+#ifndef __VMKLNX__
         elapse = ktime_to_us(ktime_get_real()) - opt->val.bert.ts;
+#else
+		struct timespec ts;
+		ktime_get_real_ts(&ts);
+		elapse = ktime_to_ns(timespec_to_ktime(ts)) - opt->val.bert.ts;
+		elapse = elapse / 1000;
+#endif /* __VMKLNX__ */
 
         if (elapse >= 0) {
             if (bertcfg->stats.rtt_avg == 0) {

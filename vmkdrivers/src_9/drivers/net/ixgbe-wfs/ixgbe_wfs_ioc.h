@@ -23,6 +23,10 @@
 struct ixgbe_wfs_adapter;
 
 extern int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa);
+#ifdef __VMKLNX__
+extern int ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa);
+#else
 extern void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa);
+#endif /* __vmKLNX__ */
 
 #endif /* !(__IXGBE_WFSIOC_H__) */

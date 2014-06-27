@@ -758,8 +758,10 @@ void ixgbe_wfs_raps_start(struct ixgbe_wfs_adapter *iwa)
 
 void ixgbe_wfs_raps_stop(struct ixgbe_wfs_adapter *iwa)
 {
+#ifdef WFS_BERT
     /* stop BERT if it's running */
     ixgbe_wfs_bert_stop_request(iwa);
+#endif /* WFS_BERT */
 
     /* stop RAPS engine */
     spin_lock_bh(&raps_lock);

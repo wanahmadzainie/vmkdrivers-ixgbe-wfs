@@ -348,6 +348,7 @@ static ssize_t ixgbe_cdev_write(struct file *filp, const char __user *buf, size_
 
 static struct file_operations fops = {
     .owner = THIS_MODULE,
+#ifndef __VMKLNX__
     .read = ixgbe_cdev_read,
     .write = ixgbe_cdev_write,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
@@ -357,6 +358,7 @@ static struct file_operations fops = {
 #endif
     .open = ixgbe_cdev_open,
     .release = ixgbe_cdev_release,
+#endif /* __VMKLNX__ */
 };
 
 /*
@@ -366,17 +368,30 @@ static struct file_operations fops = {
 /*
  *	Clean up /dev/ringNNN
  */
+#ifdef __VMKLNX__
+#define	IXGBE_WFS_DRIVER_NAME	"vmring0"
+static int apidev_major;
 
+int ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa)
+#else
 void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa)
+#endif /* __VMKLNX__ */
 {
     log_debug("Enter\n");
 
+#ifdef __VMKLNX__
+	unregister_chrdev(apidev_major, IXGBE_WFS_DRIVER_NAME);
+#else
     device_destroy(myDevClass, myDevNo);
     cdev_del(&myDev);
     class_destroy(myDevClass);
     unregister_chrdev_region(MKDEV(MAJOR(myDevNo),0), 1);
+#endif /* __VMKLNX__ */
 
     log_info("Workflow control device unregistered\n");
+#ifdef __VMKLNX__
+	return 0;
+#endif /* __VMKLNX__ */
 }
 
 /*
@@ -384,11 +399,23 @@ void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa)
  */
 int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa)
 {
+#ifndef __VMKLNX__
     int err;
     struct device *device;
+#endif /* __VMKLNX__ */
 
     log_debug("Enter\n");
 
+#ifdef __VMKLNX__
+	apidev_major = register_chrdev(0, IXGBE_WFS_DRIVER_NAME, &fops);
+	if (apidev_major < 0) {
+		log_err("Error registering device driver, err = %d\n", apidev_major);
+		return apidev_major;
+	}
+
+	log_info("Workflow control device registered, major %d\n",
+			apidev_major);
+#else
     myDevNo = 0;
     myDevOpenCount = 0;
     spin_lock_init(&myDevLock);
@@ -432,6 +459,7 @@ int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa)
 
     log_info("Workflow control device registered, major %d minor %d\n",
             MAJOR(myDevNo), MINOR(myDevNo));
+#endif /* __VMKLNX__ */
 
     return 0;
 }
