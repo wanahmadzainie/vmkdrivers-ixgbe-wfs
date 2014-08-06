@@ -6125,6 +6125,11 @@ int ixgbe_reinit_locked_change_queues(struct ixgbe_adapter *adapter)
 		usleep_range(1000, 2000);
 
 	/* start out the same as a close(), but don't release the hw */
+#ifdef IXGBE_WFS
+	ixgbe_close(adapter->netdev);
+#else
+	ixgbe_down(adapter);
+#endif /* IXGBE_WFS */
 	ixgbe_down(adapter);
 	ixgbe_free_irq(adapter);
 	ixgbe_free_all_rx_resources(adapter);
@@ -9850,6 +9855,10 @@ static int __devinit ixgbe_probe(struct pci_dev *pdev,
 
     if (iwa->state == initialized) {
         /* now register netdev */
+#ifdef __VMKLNX__
+	iwa->ndev->useDriverNamingDevice = 1;
+	pdev->netdev = iwa->ndev;
+#endif /* __VMKLNX__ */
         strcpy(iwa->ndev->name, WFS_DEVNAME_FMT);
         err = register_netdev(iwa->ndev);
         if (err) {
@@ -9867,6 +9876,11 @@ static int __devinit ixgbe_probe(struct pci_dev *pdev,
         err = ixgbe_wfs_init2(iwa);
 #endif
     }
+#ifdef __VMKLNX__
+	if (iwa->state == partial_initialized) {
+		pdev->netdev = iwa->ndev;
+	}
+#endif /* __VMKLNX__ */
 
     return err;
 }
@@ -9994,7 +10008,7 @@ static void __devexit ixgbe_remove(struct pci_dev *pdev)
 
     log_warn("remove wfsid %d port %d\n", iwa->wfs_id, adapter->wfs_port);
 
-    if (iwa->state == opened) {
+    if (iwa->state >= opened) {
         unregister_netdev(iwa->ndev);
         free_netdev(iwa->ndev);
         iwa->ndev = NULL;
@@ -10006,6 +10020,10 @@ static void __devexit ixgbe_remove(struct pci_dev *pdev)
     if (iwa->state == unused) {
         ixgbe_wfs_cleanup(iwa);
     }
+
+#ifdef __VMKLNX__
+	pdev->netdev = NULL;
+#endif /* __VMKLNX__ */
 }
 #endif /* IXGBE_WFS */
 

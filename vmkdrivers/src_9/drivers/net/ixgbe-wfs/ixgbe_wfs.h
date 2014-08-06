@@ -20,7 +20,7 @@
 #define WFS_DATASEQ
 #define WFS_FIB
 #define WFS_IOC
-//#define WFS_BERT
+#define WFS_BERT
 
 #define IXGBE_MAX_WFS_NIC   2   /* max WFS NIC allowed */
 

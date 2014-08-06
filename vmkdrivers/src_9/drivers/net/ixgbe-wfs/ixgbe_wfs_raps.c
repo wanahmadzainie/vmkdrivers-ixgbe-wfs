@@ -699,6 +699,16 @@ static void raps_main(unsigned long data)
     }
 
     /* misc */
+#ifdef __VMKLNX__
+	//FIXME
+	struct in_device *indev = iwa->ndev->ip_ptr;
+	if (indev) {
+		struct in_ifaddr *ifa = indev->ifa_list;
+		wfspeer[myID-1].ip = myIP = ifa->ifa_address;
+	} else {
+		wfspeer[myID-1].ip = myIP = 0;
+	}
+#else
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 32)
     wfspeer[myID-1].ip = myIP =
             ((struct in_device *)iwa->ndev->ip_ptr)->ifa_list == NULL ?
@@ -707,6 +717,7 @@ static void raps_main(unsigned long data)
     wfspeer[myID-1].ip = myIP =
             iwa->ndev->ip_ptr->ifa_list == NULL ? 0 : ntohl(iwa->ndev->ip_ptr->ifa_list[0].ifa_address);
 #endif
+#endif /* __VMKLNX__ */
 
     /* Set up the timer so we'll get called again. */
     raps_timer.expires = jiffies + RAPS_TICK;
@@ -730,6 +741,16 @@ void ixgbe_wfs_raps_start(struct ixgbe_wfs_adapter *iwa)
 
     memcpy(wfspeer[myID-1].mac, myMacAddr, 6);
 
+#ifdef __VMKLNX__
+	//FIXME
+	struct in_device *indev = iwa->ndev->ip_ptr;
+	if (indev) {
+		struct in_ifaddr *ifa = indev->ifa_list;
+		wfspeer[myID-1].ip = myIP = ifa->ifa_address;
+	} else {
+		wfspeer[myID-1].ip = myIP = 0;
+	}
+#else
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 32)
     wfspeer[myID-1].ip = myIP =
             ((struct in_device *)iwa->ndev->ip_ptr)->ifa_list == NULL ?
@@ -738,6 +759,7 @@ void ixgbe_wfs_raps_start(struct ixgbe_wfs_adapter *iwa)
     wfspeer[myID-1].ip = myIP =
             iwa->ndev->ip_ptr->ifa_list == NULL ? 0 : ntohl(iwa->ndev->ip_ptr->ifa_list[0].ifa_address);
 #endif
+#endif /* __VMKLNX__ */
 
     wfspeer[myID-1].channel_pri = iwa->primary;
     wfspeer[myID-1].channel_sec = iwa->secondary;
