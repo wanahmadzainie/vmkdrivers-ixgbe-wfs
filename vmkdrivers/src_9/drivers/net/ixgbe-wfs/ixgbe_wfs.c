@@ -107,31 +107,39 @@ static struct sk_buff *wfspkt_alloc(struct ixgbe_wfs_adapter *iwa, int data_len)
     if (unlikely(!skb)) {
         return NULL;
     }
+	skb->protocol = htons(WFSPKT_ETHERTYPE);
 
     return skb;
 }
 
-static void wfspkt_init(struct ixgbe_wfs_adapter *iwa, struct wfspkt *pkt, int type, unsigned char *mac_header)
+static void wfspkt_init(struct ixgbe_wfs_adapter *iwa, struct wfspkt *pkt, int type, unsigned short dstVid, unsigned char *dstMac)
 {
-    struct ethhdr *ethhdr = (struct ethhdr *)mac_header;
+    u8 broadcast_mac[6]  = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
     memset(pkt, 0, sizeof(struct wfspkt));
-    memcpy((void *)&pkt->ethhdr, (void *)ethhdr, sizeof(struct ethhdr));
+    /* wfspkt type */
     pkt->ethhdr.h_proto = htons(WFSPKT_ETHERTYPE);
-    if (ethhdr->h_dest[0] & 0x01)
+    if (dstMac[0] & 0x01)
         type |= WFSPKT_TYPE_BROADCAST_MASK;
     pkt->type = type;
 
+	/* wfspkt wfs-id */
 #ifdef WFS_FIB
     if (type & WFSPKT_TYPE_BROADCAST_MASK)
         pkt->dest = WFSID_ALL;
     else
-        pkt->dest = ixgbe_wfs_fib_lookup(iwa, (unsigned char *)ethhdr->h_dest);
+        pkt->dest = ixgbe_wfs_fib_lookup(iwa, dstVid, dstMac);
 #else
     pkt->dest = WFSID_ALL;
 #endif
 
     pkt->src = myID;
+
+	/* wfspkt MAC */
+	memcpy((void *)pkt->ethhdr.h_dest,
+			(pkt->dest == WFSID_ALL) ? (void *)broadcast_mac : wfspeer[pkt->dest-1].mac, 6);
+	memcpy((void *)pkt->ethhdr.h_source, (void *)myMacAddr, 6);
+
     pkt->len = WFSPKT_HDR_SIZE;
     pkt->opts[0] = WFSOPT_END;
 }
@@ -256,15 +264,12 @@ static struct wfsopt *wfspkt_set_bert(struct wfspkt *pkt)
 static struct sk_buff *getWfsAncePkt(struct ixgbe_wfs_adapter *iwa, struct wfsopt **opt)
 {
     struct sk_buff *n = wfspkt_alloc(iwa, 0);
-    struct ethhdr ethhdr;
     u8 broadcast_mac[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
 
     if (n == NULL) {
         log_err("no more wfspkt buffer\n");
     } else {
-        memcpy(ethhdr.h_dest, broadcast_mac, 6);
-        memcpy(ethhdr.h_source, myMacAddr, 6);
-        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_ANNOUNCE, (char *)&ethhdr);
+        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_ANNOUNCE, 0, broadcast_mac);
         *opt = wfspkt_set_announce(iwa, (struct wfspkt *)n->data);
         skb_put(n, ((struct wfspkt *)n->data)->len);
     }
@@ -274,15 +279,12 @@ static struct sk_buff *getWfsAncePkt(struct ixgbe_wfs_adapter *iwa, struct wfsop
 static struct sk_buff *getWfsRapsPkt(struct ixgbe_wfs_adapter *iwa, struct wfsopt **opt)
 {
     struct sk_buff *n = wfspkt_alloc(iwa, 0);
-    struct ethhdr ethhdr;
     u8 broadcast_mac[6] = {0xff,0xff,0xff,0xff,0xff,0xff};
 
     if (n == NULL) {
         log_err("no more wfspkt buffer\n");
     } else {
-        memcpy(ethhdr.h_dest, broadcast_mac, 6);
-        memcpy(ethhdr.h_source, myMacAddr, 6);
-        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_RAPS, (char *)&ethhdr);
+        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_RAPS, 0, broadcast_mac);
         *opt = wfspkt_set_raps((struct wfspkt *)n->data);
         skb_put(n, ((struct wfspkt *)n->data)->len);
     }
@@ -293,14 +295,11 @@ static struct sk_buff *getWfsRapsPkt(struct ixgbe_wfs_adapter *iwa, struct wfsop
 static struct sk_buff *getWfsBertPkt(struct ixgbe_wfs_adapter *iwa, u8 wfsid, int data_len, struct wfsopt **opt)
 {
     struct sk_buff *n = wfspkt_alloc(iwa, data_len);
-    struct ethhdr ethhdr;
 
     if (n == NULL) {
         log_err("no more wfspkt buffer\n");
     } else {
-        memcpy(ethhdr.h_dest, wfspeer[wfsid-1].mac, 6);
-        memcpy(ethhdr.h_source, myMacAddr, 6);
-        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_BERT, (char *)&ethhdr);
+        wfspkt_init(iwa, (struct wfspkt *)n->data, WFSPKT_TYPE_CTRL_BERT, 0, wfspeer[wfsid-1].mac);
         *opt = wfspkt_set_bert((struct wfspkt *)n->data);
         skb_put(n, ((struct wfspkt *)n->data)->len);
     }
@@ -604,9 +603,14 @@ struct sk_buff *ixgbe_wfs_encap(struct ixgbe_adapter *adapter, struct sk_buff *s
         struct ipv6hdr *ipv6;
     } hdr;
     u8 broadcast_mac[6]  = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+#ifdef HAVE_VLAN_RX_REGISTER
+	u16 vid = IXGBE_CB(skb)->vid;
+#else
+	u16 vid = skb->vlan_tci;
+#endif
 
-    log_debug("Tx skb len %d data_len %d headroom %d tailroom %d\n",
-            skb->len, skb->data_len, skb_headroom(skb), skb_tailroom(skb));
+	log_debug("Tx skb len %d data_len %d vlan_tag %d headroom %d tailroom %d\n",
+			skb->len, skb->data_len, vid & 0xfff, skb_headroom(skb), skb_tailroom(skb));
 
     hdr.network = skb->data;
 
@@ -614,9 +618,9 @@ struct sk_buff *ixgbe_wfs_encap(struct ixgbe_adapter *adapter, struct sk_buff *s
      * encapsulate data packet
      */
     if (memcmp(hdr.eth->h_dest, broadcast_mac, 6) == 0) {
-        wfspkt_init(iwa, wfspkt, WFSPKT_TYPE_DATA_BROADCAST, hdr.network);
+        wfspkt_init(iwa, wfspkt, WFSPKT_TYPE_DATA_BROADCAST, vid, hdr.eth->h_dest);
     } else {
-        wfspkt_init(iwa, wfspkt, WFSPKT_TYPE_DATA_UNICAST, hdr.network);
+        wfspkt_init(iwa, wfspkt, WFSPKT_TYPE_DATA_UNICAST, vid, hdr.eth->h_dest);
     }
 #ifdef WFS_DATASEQ
     opt = wfspkt_set_sequence(wfspkt, iwa->data_seqno++);

@@ -55,6 +55,16 @@
 /*
  *	Interface functions
  */
+static int keycmp(struct fib_key *key1, struct fib_key *key2)
+{
+	if (key1->vid < key2->vid)
+		return -1;
+	else if (key1->vid > key2->vid)
+		return 1;
+	else
+		return memcmp(key1->mac, key2->mac, 6);
+}
+
 static void fibn_free(struct ixgbe_wfs_adapter *iwa, struct fib_node *n)
 {
     BUG_ON(n == 0);
@@ -92,15 +102,16 @@ static struct fib_node *fibn_alloc(struct ixgbe_wfs_adapter *iwa)
     return n;
 }
 
-static struct fib_node *my_search(struct ixgbe_wfs_adapter *iwa, struct rb_root *root, u8 *mac)
+static struct fib_node *my_search(struct ixgbe_wfs_adapter *iwa, struct rb_root *root, u16 vid, u8 *mac)
 {
     struct rb_node *rbn = root->rb_node;
     struct fib_node *n;
+	struct fib_key key;
     int result;
 
     while (rbn) {
         n = container_of(rbn, struct fib_node, node);
-        result = memcmp(mac, n->mac, 6);
+        result = keycmp(&key, &n->key);
         if (result < 0)
             rbn = rbn->rb_left;
         else if (result > 0)
@@ -120,7 +131,7 @@ static struct fib_node *my_insert(struct ixgbe_wfs_adapter *iwa, struct rb_root 
 
     while (*new) {
         n = container_of(*new, struct fib_node, node);
-        result = memcmp(fibn->mac, n->mac, 6);
+        result = keycmp(&fibn->key, &n->key);
         parent = *new;
         if (result < 0)
             new = &((*new)->rb_left);
@@ -184,23 +195,24 @@ trim_done:
     add_timer(&fib_timer);
 }
 
-u8 ixgbe_wfs_fib_lookup(struct ixgbe_wfs_adapter *iwa, u8 *mac)
+u8 ixgbe_wfs_fib_lookup(struct ixgbe_wfs_adapter *iwa, u16 vid, u8 *mac)
 {
     struct fib_node *n;
     u8 wfsid = 0;
 
+	vid &= 0xfff;
     spin_lock_bh(&fib_lock);
 
-    n = my_search(iwa, &fib_root, mac);
+    n = my_search(iwa, &fib_root, vid, mac);
 
     if (n) {
         wfsid = n->wfsid;
-        log_debug("fib found mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
-                PRINT_MAC_VAL(n->mac), wfsid, fib_size);
+        log_debug("fib found vid % mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
+                n->key.vid, PRINT_MAC_VAL(n->mac), wfsid, fib_size);
     } else {
         wfsid = WFSID_ALL;
-        log_debug("fib can't find mac " PRINT_MAC_FMT ", set wfsid %d, fib size %d\n",
-                PRINT_MAC_VAL(mac), wfsid, fib_size);
+        log_debug("fib can't find vid %d mac " PRINT_MAC_FMT ", set wfsid %d, fib size %d\n",
+                vid, PRINT_MAC_VAL(mac), wfsid, fib_size);
     }
 
     spin_unlock_bh(&fib_lock);
@@ -208,19 +220,20 @@ u8 ixgbe_wfs_fib_lookup(struct ixgbe_wfs_adapter *iwa, u8 *mac)
     return wfsid;
 }
 
-void ixgbe_wfs_fib_delete(struct ixgbe_wfs_adapter *iwa, u8 *mac)
+void ixgbe_wfs_fib_delete(struct ixgbe_wfs_adapter *iwa, u16 vid, u8 *mac)
 {
     struct fib_node *n;
+	vid &= 0xfff;
 
     spin_lock_bh(&fib_lock);
 
-    n = my_search(iwa, &fib_root, mac);
+    n = my_search(iwa, &fib_root, vid, mac);
     if (n) {
         rb_erase(&n->node, &fib_root);
         fibn_free(iwa,n);
         fib_size--;
-        log_debug("fib delete mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
-                PRINT_MAC_VAL(n->mac), n->wfsid, fib_size);
+        log_debug("fib delete vid %d mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
+                n->key.vid, PRINT_MAC_VAL(n->mac), n->wfsid, fib_size);
     }
 
     spin_unlock_bh(&fib_lock);
@@ -255,22 +268,22 @@ void ixgbe_wfs_fib_delete_wfsid(struct ixgbe_wfs_adapter *iwa, u8 wfsid)
     spin_unlock_bh(&fib_lock);
 }
 
-void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, u8 *mac, u32 ip, u8 wfsid)
+void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, u16 vid, u8 *mac, u32 ip, u8 wfsid)
 {
     struct fib_node *n, *fibn;
 
     BUG_ON (wfsid < WFSID_MIN || wfsid > WFSID_MAX);
+	vid &= 0xfff;
 
     spin_lock_bh(&fib_lock);
 
-    fibn = my_search(iwa, &fib_root, mac);
+    fibn = my_search(iwa, &fib_root, vid, mac);
     if (fibn) {
-        memcpy(fibn->mac, mac, 6);
         fibn->ip = ip;
         fibn->wfsid = wfsid;
         fibn->time_tag = current_time_tag;
-        log_debug("fib update mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
-                PRINT_MAC_VAL(fibn->mac), fibn->wfsid, fib_size);
+        log_debug("fib update vid %d mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
+                fibn->key.vid, PRINT_MAC_VAL(fibn->mac), fibn->wfsid, fib_size);
         goto fib_insert_done;
     }
 
@@ -280,7 +293,8 @@ void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, u8 *mac, u32 ip, u8 wfs
         n = fibn_alloc(iwa);
     }
 
-    memcpy(n->mac, mac, 6);
+	n->key.vid = vid;
+    memcpy(n->key.mac, mac, 6);
     n->ip = ip;
     n->wfsid = wfsid;
     n->time_tag = current_time_tag;
@@ -291,8 +305,8 @@ void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, u8 *mac, u32 ip, u8 wfs
         fibn_free(iwa,n);
     else {
         fib_size++;
-        log_debug("fib insert mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
-                PRINT_MAC_VAL(fibn->mac), fibn->wfsid, fib_size);
+        log_debug("fib insert vid %d mac " PRINT_MAC_FMT " wfsid %d, fib size %d\n",
+                fibn->key.vid, PRINT_MAC_VAL(fibn->mac), fibn->wfsid, fib_size);
     }
 
 fib_insert_done:
@@ -381,7 +395,8 @@ int ixgbe_wfs_fib_get_entries(struct ixgbe_wfs_adapter *iwa, struct wfsctl_fib_d
         n = rb_entry(rbn, struct fib_node, node);
         fib[num].no = i+1;
         fib[num].id = n->wfsid;
-        memcpy(fib[num].mac, n->mac, 6);
+		fib[num].vid = n->key.vid;
+        memcpy(fib[num].mac, n->key.mac, 6);
         fib[num].ip = n->ip;
         num++;
     }

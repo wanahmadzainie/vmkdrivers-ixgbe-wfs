@@ -48,6 +48,7 @@ typedef struct wfsctl_fib_data {
     u_int no;       /* entry no */
     u_char id;      /* workstation id, 1-based */
     u_int ip;       /* workstation IP address */
+	u_short vid;    /* workstation VLAN */
     u_char mac[6];  /* workstation MAC address */
     char eport;     /* local egress port, 0-based, -1 if unknown */
 } wfsctl_fib_data;

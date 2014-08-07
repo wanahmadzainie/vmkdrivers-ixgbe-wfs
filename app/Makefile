@@ -32,16 +32,16 @@ INSTDIR := /usr/bin
 
 .PHONY:	clean install
 
-all:	$(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(LFLAGS) -o $(APP)
-	
+all:	$(APP)
 	@echo "***** App Compiled *****"
 
+$(APP): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LFLAGS) -o $(APP)
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 	
-install: all
+install: $(APP)
 	# remove all old versions of the driver
 	find $(INSTDIR) -name $(APP) -exec rm -f {} \; || true
 	install -D -m 755 $(APP) $(INSTDIR)/$(APP)

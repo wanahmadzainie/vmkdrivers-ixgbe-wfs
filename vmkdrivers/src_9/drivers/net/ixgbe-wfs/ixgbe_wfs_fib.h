@@ -17,12 +17,17 @@
 #ifndef _IXGBE_WFS_FIB_H_
 #define _IXGBE_WFS_FIB_H_
 
+struct fib_key {
+	u16 vid;
+	u8 mac[6];
+};
+
 struct fib_node {
     struct rb_node node;
     struct fib_node *next_alloc;
     struct fib_node *next_free;
+	struct fib_key key;
     u32 ip;
-    u8 mac[6]; /* key */
     u8 wfsid;
     u8 time_tag;
 };
@@ -32,9 +37,9 @@ struct wfsctl_fib_data;
 
 extern int ixgbe_wfs_fib_init(struct ixgbe_wfs_adapter *iwa);
 extern void ixgbe_wfs_fib_cleanup(struct ixgbe_wfs_adapter *iwa);
-extern void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, unsigned char *mac, unsigned int ip, unsigned char wfsid);
-extern u8 ixgbe_wfs_fib_lookup(struct ixgbe_wfs_adapter *iwa, unsigned char *mac);
-extern void ixgbe_wfs_fib_delete(struct ixgbe_wfs_adapter *iwa, unsigned char *mac);
+extern void ixgbe_wfs_fib_update(struct ixgbe_wfs_adapter *iwa, unsigned short vid, unsigned char *mac, unsigned int ip, unsigned char wfsid);
+extern u8 ixgbe_wfs_fib_lookup(struct ixgbe_wfs_adapter *iwa, unsigned short vid, unsigned char *mac);
+extern void ixgbe_wfs_fib_delete(struct ixgbe_wfs_adapter *iwa, unsigned short vid, unsigned char *mac);
 extern void ixgbe_wfs_fib_delete_wfsid(struct ixgbe_wfs_adapter *iwa, unsigned char wfsid);
 extern int ixgbe_wfs_fib_get_entries(struct ixgbe_wfs_adapter *iwa, struct wfsctl_fib_data *fib, int max_entry);
 

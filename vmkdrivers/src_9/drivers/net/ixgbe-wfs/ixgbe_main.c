@@ -87,7 +87,7 @@ static const char ixgbe_copyright[] =
 static const char ixgbe_wfs_driver_string[] =
 				"Power-All(R) Workflow Ethernet Ring Network Driver";
 
-#define WFS_DRV_VERSION __stringify(3.21.4-1.0.1)
+#define WFS_DRV_VERSION __stringify(3.21.4-1.0.2)
 
 const char ixgbe_wfs_driver_version[] = WFS_DRV_VERSION;
 static const char ixgbe_wfs_copyright[] =
@@ -1274,8 +1274,12 @@ static void ixgbe_receive_skb(struct ixgbe_q_vector *q_vector,
 
 #if defined(NETIF_F_HW_VLAN_TX) || defined(NETIF_F_HW_VLAN_CTAG_TX)
 	if (vlan_tag & VLAN_VID_MASK) {
+#ifdef IXGBE_WFS
+		struct vlan_group **vlgrp = &q_vector->adapter->vlgrp;
+#else
 		/* by placing vlgrp at start of structure we can alias it */
 		struct vlan_group **vlgrp = netdev_priv(skb->dev);
+#endif /* IXGBE_WFS */
 #ifndef __VMKLNX__
 		if (!*vlgrp)
 #else
@@ -1523,7 +1527,7 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 	struct ixgbe_adapter *adapter = rx_ring->q_vector->adapter;
 	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
 	struct wfspkt *wfspkt;
-	netdev_tx_t rc;
+	netdev_tx_t rc = -1;
 #endif /* IXGBE_WFS */
 
 	ixgbe_update_rsc_stats(rx_ring, skb);
@@ -1542,19 +1546,25 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 
 	wfspkt = (struct wfspkt *)skb->data;
 
+	skb_reset_mac_header(skb);
+	skb_set_network_header(skb, wfspkt->len + ETH_HLEN);
+	skb->protocol = wfspkt->ethhdr.h_proto;
+
 	/* drop loop packet */
 	if (wfspkt->src == iwa->wfs_id) {
+#if 0
+		/* add interface into a bridge will always trigger this error message, comment out */
 		if (strncmp(iwa->mac_addr, wfspkt->ethhdr.h_source,6))
 			log_err("Workstation Id (WfsId=%d) conflict with MAC " PRINT_MAC_FMT "\n",
 					wfspkt->src, PRINT_MAC_VAL(wfspkt->ethhdr.h_source));
+#endif
 		log_debug("drop looped packet\n");
 		dev_kfree_skb_any(skb);
 		return false;
 	}
 
-	/* forward broadcast or unicast packet not destined to me */
-	if (((wfspkt->type & WFSPKT_TYPE_BROADCAST_MASK) || wfspkt->dest != iwa->wfs_id) &&
-		adapter->wfs_other->link_up)
+	/* forward packet if not destined to me only */
+	if (wfspkt->dest != iwa->wfs_id && adapter->wfs_other->link_up)
 	{
 		struct sk_buff *nskb = skb_copy(skb, GFP_ATOMIC);
 
@@ -1564,7 +1574,16 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 #ifdef HAVE_TX_MQ
 			nskb->queue_mapping = (nskb->queue_mapping+1) % adapter->wfs_other->num_tx_queues;
 #endif /* HAVE_TX_MQ */
-			rc = ixgbe_xmit_wfs_frame(nskb, adapter->wfs_other);
+#if defined(NETIF_F_HW_VLAN_TX) || defined(NETIF_F_HW_VLAN_CTAG_TX)
+			ixgbe_rx_vlan(rx_ring, rx_desc, nskb);
+#ifdef HAVE_VLAN_RX_REGISTER
+			nskb = vlan_put_tag(nskb, IXGBE_CB(nskb)->vid);
+#else
+			nskb = vlan_put_tag(nskb, htons(ETH_P_8021Q), nskb->vlan_tci);
+#endif
+#endif
+			if (nskb)
+				rc = ixgbe_xmit_wfs_frame(nskb, adapter->wfs_other);
 			if (rc != NETDEV_TX_OK) {
 				/* reduce error message output */
 				if ((iwa->xmit_err%1000) == 0)
@@ -1583,8 +1602,8 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 		}
 	}
 
-	/* drop unicast not destined to me */
-	if (!(wfspkt->type & WFSPKT_TYPE_BROADCAST_MASK) && wfspkt->dest != iwa->wfs_id) {
+	/* drop unicast for other workstation */
+	if (wfspkt->dest != WFSID_ALL && wfspkt->dest != iwa->wfs_id) {
 		log_debug("drop unicast packet for wfsid %d\n", wfspkt->dest);
 		dev_kfree_skb_any(skb);
 		return false;
@@ -1651,12 +1670,14 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 	ixgbe_rx_vlan(rx_ring, rx_desc, skb);
 
 #ifdef WFS_FIB
-	if (!(wfspkt->type & WFSPKT_TYPE_BROADCAST_MASK)) {
+	/* aggressive update FIB */
+	//if (!(wfspkt->type & WFSPKT_TYPE_BROADCAST_MASK)) {
+	{
 		union {
 			unsigned char *network;
 			/* l2 headers */
 			struct ethhdr *eth;
-			struct vlan_hdr *vlan;
+			struct vlan_ethhdr *veth;
 		} l2hdr;
 		union { 
 			unsigned char *network;
@@ -1664,17 +1685,22 @@ static void ixgbe_process_skb_fields(struct ixgbe_ring *rx_ring,
 			struct iphdr *ipv4;
 			struct ipv6hdr *ipv6;
 		} l3hdr;
+#ifdef HAVE_VLAN_RX_REGISTER
+		u16 vid = IXGBE_CB(skb)->vid;
+#else
+		u16 vid = skb->vlan_tci;
+#endif
 
 		l2hdr.network = skb->data;
 		if ((l2hdr.eth->h_proto == __constant_htons(ETH_P_8021Q) &&
-				l2hdr.vlan->h_vlan_encapsulated_proto == __constant_htons(ETH_P_IP)))
+				l2hdr.veth->h_vlan_encapsulated_proto == __constant_htons(ETH_P_IP)))
 			l3hdr.network = l2hdr.network + VLAN_ETH_HLEN;
 		else if (l2hdr.eth->h_proto == __constant_htons(ETH_P_IP))
 			l3hdr.network = l2hdr.network + ETH_HLEN;
 		else
 			l3hdr.network = 0;
 
-		ixgbe_wfs_fib_update(iwa, l2hdr.eth->h_source, l3hdr.network ? ntohl(l3hdr.ipv4->saddr) : 0, wfspkt->src);
+		ixgbe_wfs_fib_update(iwa, vid, l2hdr.eth->h_source, l3hdr.network ? ntohl(l3hdr.ipv4->saddr) : 0, wfspkt->src);
 	}
 #endif /* IXGBE_FIB */
 
@@ -9060,7 +9086,7 @@ int ixgbe_wol_supported(struct ixgbe_adapter *adapter, u16 device_id,
  * and a hardware reset occur.
  **/
 #ifdef IXGBE_WFS
-static int __devinit ixgbe_wfs_probe(struct ixgbe_wfs_adapter *iwa,
+static int ixgbe_wfs_probe(struct ixgbe_wfs_adapter *iwa,
                  struct pci_dev *pdev, const struct pci_device_id *ent)
 #else 
 static int __devinit ixgbe_probe(struct pci_dev *pdev,
@@ -9834,7 +9860,7 @@ err_dma:
  * The OS initialization, configuring of the adapter private structure,
  * and a hardware reset occur.
  **/
-static void __devexit ixgbe_wfs_remove(struct ixgbe_wfs_adapter *iwa, struct pci_dev *pdev);
+static void ixgbe_wfs_remove(struct ixgbe_wfs_adapter *iwa, struct pci_dev *pdev);
 static int __devinit ixgbe_probe(struct pci_dev *pdev,
                  const struct pci_device_id *ent)
 {
@@ -9896,7 +9922,7 @@ static int __devinit ixgbe_probe(struct pci_dev *pdev,
  * memory.
  **/
 #ifdef IXGBE_WFS
-static void __devexit ixgbe_wfs_remove(struct ixgbe_wfs_adapter *iwa, struct pci_dev *pdev)
+static void ixgbe_wfs_remove(struct ixgbe_wfs_adapter *iwa, struct pci_dev *pdev)
 #else
 static void __devexit ixgbe_remove(struct pci_dev *pdev)
 #endif

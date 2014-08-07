@@ -218,7 +218,7 @@ static wfs_fsm_state wfs_fsm_action_discover(struct ixgbe_wfs_adapter *iwa, u8 w
 
     if (peer->fsm_state != S_init) {
 #ifdef WFS_FIB
-        ixgbe_wfs_fib_update(iwa, peer->mac, peer->ip, wfsid);
+        ixgbe_wfs_fib_update(iwa, 0, peer->mac, peer->ip, wfsid);
 #endif
     }
 

@@ -170,9 +170,14 @@ static int cmd_show_fib(int fd, int argc, char **argv)
             if (num == 0)
                 break;
 
-            for (i=0; i<num; i++)
-                printf("  %-17s  %4d    %s/%s\n", mac2str(fib[i].mac), fib[i].id,
-                        myDevName, port2str(fib[i].eport));
+            for (i=0; i<num; i++) {
+                if (fib[i].vid == 0)
+                    printf("  %-17s  %4d    %s/%s\n", mac2str(fib[i].mac), fib[i].id,
+                            myDevName, port2str(fib[i].eport));
+                else
+                    printf("  %-17s  %4d    %s.%d/%s\n", mac2str(fib[i].mac), fib[i].id,
+                            myDevName, fib[i].vid, port2str(fib[i].eport));
+            }
 
             fibn += num;
         }

@@ -25,7 +25,7 @@
 #define WFSPKT_TYPE_DATA_BROADCAST  (WFSPKT_TYPE_BROADCAST_MASK + WFSPKT_TYPE_DATA_MASK)
 #define WFSPKT_TYPE_DATA_UNICAST    (WFSPKT_TYPE_DATA_MASK)
 
-#define WFSPKT_ETHERTYPE        0x7083  /* Xilinx PCI Device ID */
+#define WFSPKT_ETHERTYPE        0x88B5  /* WFS local experiment type */
 
 #define WFSPKT_MIN_NUM          1999    /* same as DMA_BD_CNT */
 #define WFSPKT_MAX_NUM          3000
