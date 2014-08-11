@@ -940,6 +940,9 @@ static int ixgbe_alloc_q_vector(struct ixgbe_adapter *adapter,
 	u8 tcs = netdev_get_num_tc(adapter->netdev);
 #endif
 	int ring_count, size;
+#ifdef IXGBE_WFS
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+#endif
 #ifdef __VMKLNX__
 	int rx_count = ixgbe_calculate_rx_ring_size(adapter);
 	adapter->rx_ring_count = rx_count;
@@ -1039,6 +1042,12 @@ static int ixgbe_alloc_q_vector(struct ixgbe_adapter *adapter,
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = txr_idx;
 
+#ifdef IXGBE_WFS
+		/* set queue_index used by netdev */
+		ring->netif_queue_index = txr_idx +
+				(adapter->is_wfs_primary ? 0 : iwa->primary->num_tx_queues);
+#endif
+
 		/* assign ring to adapter */
 		adapter->tx_ring[txr_idx] = ring;
 
@@ -1091,6 +1100,12 @@ static int ixgbe_alloc_q_vector(struct ixgbe_adapter *adapter,
 
 		/* assign ring to adapter */
 		adapter->rx_ring[rxr_idx] = ring;
+
+#ifdef IXGBE_WFS
+		/* set queue_index used by netdev */
+		ring->netif_queue_index = rxr_idx +
+				(adapter->is_wfs_primary ? 0 : iwa->primary->num_rx_queues);
+#endif
 
 		/* update count and index */
 		rxr_count--;

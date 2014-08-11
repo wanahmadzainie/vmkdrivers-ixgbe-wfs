@@ -397,8 +397,12 @@ enum ixgbe_ring_state_t {
 	clear_bit(__IXGBE_RING_NETDEV_CNA, &(ring)->state)
 
 #define netdev_ring(ring) (ring->netdev)
+#ifdef IXGBE_WFS
+/* macro is used for netdev which indexed for both primary/secondary adapters */
+#define ring_queue_index(ring) (ring->netif_queue_index)
+#else
 #define ring_queue_index(ring) (ring->queue_index)
-
+#endif /* IXGBE_WFS */
 
 struct ixgbe_ring {
 	struct ixgbe_ring *next;	/* pointer to next ring in q_vector */
@@ -421,6 +425,9 @@ struct ixgbe_ring {
 	u16 count;			/* amount of descriptors */
 
 	u8 queue_index; /* needed for multiqueue queue management */
+#ifdef IXGBE_WFS
+	u8 netif_queue_index;   /* indexed for both adapters */
+#endif
 	u8 reg_idx;			/* holds the special value that gets
 					 * the hardware register offset
 					 * associated with this ring, which is
