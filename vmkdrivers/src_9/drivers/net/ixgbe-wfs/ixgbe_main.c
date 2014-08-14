@@ -8481,6 +8481,14 @@ static int ixgbe_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	case SIOCGMIIREG:
 	case SIOCSMIIREG:
 		return ixgbe_mii_ioctl(netdev, ifr, cmd);
+#if defined(__VMKLNX__) && defined(WFS_IOC)
+	case WFSCTL_GET_PEER_LIST:
+	case WFSCTL_GET_PHY_STATS:
+	case WFSCTL_GET_FIB:
+	case WFSCTL_SET_BERT_CFG:
+	case WFSCTL_GET_BERT_STATS:
+		return ixgbe_wfs_ioctl(netdev, ifr, cmd);
+#endif /* __VMKLNX__ && WFS_IOC */
 	default:
 		return -EOPNOTSUPP;
 	}

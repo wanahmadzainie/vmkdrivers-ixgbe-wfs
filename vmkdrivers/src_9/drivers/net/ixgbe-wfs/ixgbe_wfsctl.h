@@ -117,4 +117,17 @@ typedef struct wfsctl_data {
 #define WFSCTL_SET_BERT_CFG    _IOWR(WFSCTL_MAGIC, 4, wfsctl_data)
 #define WFSCTL_GET_BERT_STATS  _IOWR(WFSCTL_MAGIC, 5, wfsctl_data)
 
+#if defined(__VMWARE__) || defined(__VMKLNX__)
+#undef	WFSCTL_GET_PEER_LIST
+#undef	WFSCTL_GET_PHY_STATS
+#undef	WFSCTL_GET_FIB
+#undef	WFSCTL_SET_BERT_CFG
+#undef	WFSCTL_GET_BERT_STATS
+#define WFSCTL_GET_PEER_LIST	0x9001
+#define WFSCTL_GET_PHY_STATS	0x9002
+#define WFSCTL_GET_FIB			0x9003
+#define WFSCTL_SET_BERT_CFG		0x9004
+#define WFSCTL_GET_BERT_STATS	0x9005
+#endif /* __VMWARE__ || __VMKLNX__ */
+
 #endif /* !(__WFSCTL_H__) */

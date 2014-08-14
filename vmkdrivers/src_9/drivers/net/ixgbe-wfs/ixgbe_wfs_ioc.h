@@ -24,5 +24,8 @@ struct ixgbe_wfs_adapter;
 
 extern int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa);
 extern void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa);
+#ifdef __VMKLNX__
+int ixgbe_wfs_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd);
+#endif /* __VMKLNX__ */
 
 #endif /* !(__IXGBE_WFSIOC_H__) */

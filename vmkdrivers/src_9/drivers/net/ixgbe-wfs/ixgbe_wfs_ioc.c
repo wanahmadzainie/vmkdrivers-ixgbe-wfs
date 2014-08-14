@@ -93,6 +93,7 @@ static int get_wfsfib_entry(struct ixgbe_wfs_adapter *iwa, wfsctl_fib_data *fib,
     struct wfs_peer *peer;
 
     num = ixgbe_wfs_fib_get_entries(iwa, fib, max_entry);
+printk("get_wfsfib_entry: num= %d\n", num);
     for (i=0; i<num; i++) {
         peer = &wfspeer[fib[i].id-1];
 #if 0
@@ -175,7 +176,15 @@ static int ixgbe_cdev_release(struct inode * in, struct file * filp)
 
     return 0;
 }
+#endif /* __VMKLNX__ */
 
+#ifdef __VMKLNX__
+int ixgbe_wfs_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+{
+	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+	struct ixgbe_wfs_adapter *iwa = adapter->wfs_parent;
+	wfsctl_data __user *iocdata = (wfsctl_data __user *) &ifr->ifr_data;
+#else
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 static int ixgbe_cdev_ioctl(struct inode * in, struct file * filp, unsigned int cmd, unsigned long arg)
 {
@@ -185,9 +194,12 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
 {
     struct ixgbe_wfs_adapter *iwa = (struct ixgbe_wfs_adapter *)filp->private_data;
 #endif
+#endif /* __VMKLNX__ */
     int retval = 0, num;
     unsigned long val;
+#ifndef __VMKLNX__
     wfsctl_data iocd;
+#endif /* __VMKLNX__ */
     wfsctl_peer_data plist[MAX_PEER_LIST];
 #ifdef WFS_FIB
     wfsctl_fib_data fib[FIB_GET_SIZE];
@@ -199,6 +211,7 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
 
     log_debug("Enter, cmd %x\n", cmd);
 
+#ifndef __VMKLNX__
     /* Check cmd type and value */
     if(_IOC_TYPE(cmd) != WFSCTL_MAGIC) return -ENOTTY;
     if(_IOC_NR(cmd) > WFSCTL_MAX_CMD) return -ENOTTY;
@@ -220,23 +233,32 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
         retval = -EFAULT;
         goto dev_ioctl_done;
     }
+#endif /* __VMKLNX__ */
 
     if (cmd == WFSCTL_GET_PEER_LIST) {
         log_debug("IOC process WFSCTL_GET_PEER_LIST\n");
 
         num = get_wfspeer_list(iwa, plist, MAX_PEER_LIST);
+#ifdef __VMKLNX__
+		iocdata->len = num * sizeof(wfsctl_peer_data);
+		if (num) {
+			if ((val = copy_to_user(iocdata->v.plist, plist, num * sizeof(wfsctl_peer_data)))) {
+#else
         iocd.len = num * sizeof(wfsctl_peer_data);
         if (num) {
             if ((val = copy_to_user(iocd.v.plist, plist, num * sizeof(wfsctl_peer_data)))) {
+#endif /* __VMKLNX__ */
                 log_err("copy_to_user failed, val=%ld\n", val);
                 retval = -EFAULT;
                 goto dev_ioctl_done;
             }
         }
+#ifndef __VMKLNX__
         if ((val = copy_to_user((wfsctl_data *)arg, &iocd.len, sizeof(iocd.len)))) {
             log_err("copy_to_user failed, val=%ld\n", val);
             retval = -EFAULT;
         }
+#endif /* __VMKLNX__ */
     }
 
     else if (cmd == WFSCTL_GET_PHY_STATS) {
@@ -249,25 +271,37 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
         log_debug("IOC process WFSCTL_GET_FIB\n");
 
         // get start entry no.
+#ifdef __VMKLNX__
+		if ((val = copy_from_user(&fib[0], iocdata->v.fib, sizeof(wfsctl_fib_data)))) {
+#else
         if ((val = copy_from_user(&fib[0], iocd.v.fib, sizeof(wfsctl_fib_data)))) {
+#endif /* __VMKLNX__ */
             log_err("copy_from_user failed, val=%ld\n", val);
             retval = -EFAULT;
             goto dev_ioctl_done;
         }
 
         num = get_wfsfib_entry(iwa, fib, FIB_GET_SIZE);
+#ifdef __VMKLNX__
+		iocdata->len = num * sizeof(wfsctl_fib_data);
+		if (num) {
+			if ((val = copy_to_user(iocdata->v.fib, fib, num * sizeof(wfsctl_fib_data)))) {
+#else
         iocd.len = num * sizeof(wfsctl_fib_data);
         if (num) {
             if ((val = copy_to_user(iocd.v.fib, fib, num * sizeof(wfsctl_fib_data)))) {
+#endif /* __VMKLNX__ */
                 log_err("copy_to_user failed, val=%ld\n", val);
                 retval = -EFAULT;
                 goto dev_ioctl_done;
             }
         }
+#ifndef __VMKLNX__
         if ((val = copy_to_user((wfsctl_data *)arg, &iocd.len, sizeof(iocd.len)))) {
             log_err("copy_to_user failed, val=%ld\n", val);
             retval = -EFAULT;
         }
+#endif /* __VMKLNX__ */
     }
 #endif
 
@@ -275,7 +309,11 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
     else if (cmd == WFSCTL_SET_BERT_CFG) {
         log_debug("IOC process WFSCTL_SET_BERT_CFG\n");
 
+#ifdef __VMKLNX__
+		if ((val = copy_from_user(&bertcfg, iocdata->v.bertcfg, sizeof(wfsctl_bert_cfg)))) {
+#else
         if ((val = copy_from_user(&bertcfg, iocd.v.bertcfg, sizeof(wfsctl_bert_cfg)))) {
+#endif /* __VMKLNX__ */
             log_err("copy_from_user failed, val=%ld\n", val);
             retval = -EFAULT;
             goto dev_ioctl_done;
@@ -291,7 +329,11 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
         log_debug("IOC process WFSCTL_GET_BERT_STATS\n");
 
         // get wfsid
+#ifdef __VMKLNX__
+		if ((val = copy_from_user(&bertstats, iocdata->v.bertstats, sizeof(wfsctl_bert_stats)))) {
+#else
         if ((val = copy_from_user(&bertstats, iocd.v.bertstats, sizeof(wfsctl_bert_stats)))) {
+#endif /* __VMKLNX__ */
             log_err("copy_from_user failed, val=%ld\n", val);
             retval = -EFAULT;
             goto dev_ioctl_done;
@@ -299,30 +341,40 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
 
         get_bert_stats(iwa, &bertstats);
 
+#ifdef __VMKLNX__
+		iocdata->len = sizeof(bertstats);
+		if ((val = copy_to_user(iocdata->v.bertstats, &bertstats, sizeof(wfsctl_bert_stats)))) {
+#else
         iocd.len = sizeof(bertstats);
         if ((val = copy_to_user(iocd.v.bertstats, &bertstats, sizeof(wfsctl_bert_stats)))) {
+#endif /* __VMKLNX__ */
             log_err("copy_to_user failed, val=%ld\n", val);
             retval = -EFAULT;
             goto dev_ioctl_done;
         }
+#ifndef __VMKLNX__
         if ((val = copy_to_user((wfsctl_data *)arg, &iocd.len, sizeof(iocd.len)))) {
             log_err("copy_to_user failed, val=%ld\n", val);
             retval = -EFAULT;
         }
+#endif /* __VMKLNX__ */
     }
 #endif
+
     else {
         log_err("unknown command 0x%x\n", cmd);
         retval = -EFAULT;
     }
 
 dev_ioctl_done:
-
+#ifndef __VMKLNX__
     spin_unlock_bh(&myDevLock);
+#endif /* __VMKLNX__ */
 
     return retval;
 }
 
+#ifndef __VMKLNX__
 static ssize_t ixgbe_cdev_read(struct file *filp, __user char *buf, size_t count, loff_t *ppos)
 {
 #if IXGBE_WFS_DEBUGLEVEL >= 4
@@ -371,16 +423,16 @@ static struct file_operations fops = {
 
 void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa)
 {
+#ifndef __VMKLNX__
     log_debug("Enter\n");
 
-#ifndef __VMKLNX__
     device_destroy(myDevClass, myDevNo);
     cdev_del(&myDev);
     class_destroy(myDevClass);
     unregister_chrdev_region(MKDEV(MAJOR(myDevNo),0), 1);
-#endif /* __VMKLNX__ */
 
     log_info("Workflow control device unregistered\n");
+#endif /* __VMKLNX__ */
 }
 
 /*
@@ -388,12 +440,12 @@ void ixgbe_wfs_ioc_cleanup(struct ixgbe_wfs_adapter *iwa)
  */
 int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa)
 {
+#ifndef __VMKLNX__
     int err;
     struct device *device;
 
     log_debug("Enter\n");
 
-#ifndef __VMKLNX__
     myDevNo = 0;
     myDevOpenCount = 0;
     spin_lock_init(&myDevLock);

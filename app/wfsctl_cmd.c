@@ -31,6 +31,12 @@
 #include "wfsctl_cmd.h"
 #include "utils.h"
 
+#ifdef __VMWARE__
+#include <net/if.h>
+
+static struct ifreq ifr;
+#endif /* __VMWARE__ */
+
 
 static wfsctl_data iocdata;
 static wfsctl_peer_data plist[MAX_PEER_LIST];
@@ -75,8 +81,14 @@ static int cmd_show_bert_result(int fd, int argc, char **argv)
 
     iocdata.len = sizeof(wfsctl_bert_stats);
     iocdata.v.bertstats = stats;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr)) == 0 && stats->interval) {
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
     if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata)) == 0 && stats->interval) {
         ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata);
+#endif /* __VMWARE__ */
         printf("SOURCE   : WFS-ID %d\n", stats->wfsid);
         printf("INTERVAL : %s\n", sec2str(stats->interval));
         printf("REQUEST  : RX %lu pkts, %sB, %sbps\n",
@@ -122,10 +134,17 @@ static int cmd_show_peers(int fd, int argc, char **argv)
            "  WFS_ID  MAC_ADDR           IP_ADDR          PRI/SEC  STATE    TX_PORT       \n"
            "------------------------------------------------------------------------------\n");
 
-
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if ((retval = ioctl(fd, WFSCTL_GET_PEER_LIST, &ifr)) < 0) {
+#else
     if ((retval = ioctl(fd, WFSCTL_GET_PEER_LIST, &iocdata)) < 0) {
+#endif /* __VMWARE__ */
         fprintf(stderr, "ERROR: get workstation list failed, retval = %d\n", retval);
     } else {
+#ifdef __VMWARE__
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#endif
         num = iocdata.len / sizeof(wfsctl_peer_data);
 
         for (i=0; i<num; i++) {
@@ -162,10 +181,18 @@ static int cmd_show_fib(int fd, int argc, char **argv)
     for (fibn=1; ; ) {
         fib[0].no = fibn; /* set first entry no. to read */
 
+#ifdef __VMWARE__
+		memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+		if ((retval = ioctl(fd, WFSCTL_GET_FIB, &ifr)) < 0) {
+#else
         if ((retval = ioctl(fd, WFSCTL_GET_FIB, &iocdata)) < 0) {
+#endif /* __VMWARE__ */
             fprintf(stderr, "ERROR: get MAC forwarding table failed, retval = %d\n", retval);
             break;
         } else {
+#ifdef __VMWARE__
+			memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#endif
             num = iocdata.len / sizeof(wfsctl_fib_data);
             if (num == 0)
                 break;
@@ -231,7 +258,13 @@ show_bert_start:
     stats2 = &bertstats[i=0];
     iocdata.len = sizeof(wfsctl_bert_stats);
     iocdata.v.bertstats = stats2;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if (ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr) == 0)
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
     ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata);
+#endif /* __VMWARE__ */
     ts0 = ts1 = ts2 = time(0);
 
     while (!CTRL_C) {
@@ -240,7 +273,13 @@ show_bert_start:
         stats2 = &bertstats[(++i)%2];
         iocdata.v.bertstats = stats2;
 
+#ifdef __VMWARE__
+		memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+		if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr)) == 0 && !CTRL_C) {
+			memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
         if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata)) == 0 && !CTRL_C) {
+#endif /* __VMWARE__ */
             ts1 = ts2; ts2 = time(0);
             if (stats1->interval > stats2->interval) {
                 /* stats has been reset if previous interval is shorter */
@@ -270,8 +309,14 @@ show_bert_start:
     sleep(1);
     iocdata.len = sizeof(wfsctl_bert_stats);
     iocdata.v.bertstats = stats2;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+    if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr)) == 0 && stats2->interval) {
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
     if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata)) == 0 && stats2->interval) {
         ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata);
+#endif /* __VMWARE__ */
         printf("SOURCE   : WFS-ID %d\n", stats2->wfsid);
         printf("INTERVAL : %s\n", sec2str(stats2->interval));
         printf("REQUEST  : RX %lu pkts, %sB, %sbps\n",
@@ -388,7 +433,12 @@ static int cmd_bert(int fd, int argc, char **argv)
     bertcfg.onoff = 1;
     iocdata.len = sizeof(bertcfg);
     iocdata.v.bertcfg = &bertcfg;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+    if ((retval = ioctl(fd, WFSCTL_SET_BERT_CFG, &ifr)) < 0) {
+#else
     if ((retval = ioctl(fd, WFSCTL_SET_BERT_CFG, &iocdata)) < 0) {
+#endif /* __VMWARE__ */
         fprintf(stderr, "ERROR: set BERT configuration failed, retval = %d\n", retval);
         return -1;
     }
@@ -413,7 +463,13 @@ static int cmd_bert(int fd, int argc, char **argv)
     stats2 = &bertstats[i=0];
     iocdata.len = sizeof(wfsctl_bert_stats);
     iocdata.v.bertstats = stats2;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if (ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr) == 0)
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
     ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata);
+#endif /* __VMWARE__ */
     ts0 = ts1 = ts2 = time(0);
 
     while (!CTRL_C) {
@@ -422,7 +478,13 @@ static int cmd_bert(int fd, int argc, char **argv)
         stats2 = &bertstats[(++i)%2];
         iocdata.v.bertstats = stats2;
 
+#ifdef __VMWARE__
+		memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+        if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr)) == 0 && !CTRL_C) {
+			memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
         if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata)) == 0 && !CTRL_C) {
+#endif /* __VMWARE__ */
             ts1 = ts2; ts2 = time(0);
             printf("%4u -%4u  %8ld  %9sbps  %8ld  %9sbps  %8ld  %8ld  %8ld  %8ld\n",
                     ts1-ts0, ts2-ts0,
@@ -442,7 +504,12 @@ static int cmd_bert(int fd, int argc, char **argv)
     bertcfg.onoff = 0;
     iocdata.len = sizeof(bertcfg);
     iocdata.v.bertcfg = &bertcfg;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if ((retval = ioctl(fd, WFSCTL_SET_BERT_CFG, &ifr)) < 0) {
+#else
     if ((retval = ioctl(fd, WFSCTL_SET_BERT_CFG, &iocdata)) < 0) {
+#endif
         fprintf(stderr, "ERROR: set test configration failed, retval = %d\n", retval);
         return -1;
     }
@@ -451,8 +518,14 @@ static int cmd_bert(int fd, int argc, char **argv)
     sleep(1);
     iocdata.len = sizeof(wfsctl_bert_stats);
     iocdata.v.bertstats = stats2;
+#ifdef __VMWARE__
+	memcpy(&ifr.ifr_data, &iocdata, sizeof(iocdata));
+	if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &ifr)) == 0 && stats2->interval) {
+		memcpy(&iocdata, &ifr.ifr_data, sizeof(iocdata));
+#else
     if ((retval = ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata)) == 0 && stats2->interval) {
         ioctl(fd, WFSCTL_GET_BERT_STATS, &iocdata);
+#endif /* __VMWARE__ */
         printf("TARGET   : WFS-ID %d\n", bertcfg.wfsid);
         if (bertcfg.pkt_pattern_flag)
         printf("DATA     : PKT SIZE %d bytes PATTERN random @ %sbps (%u pkts/s)\n",

@@ -18,7 +18,7 @@ endif
 ifeq ($(OS_TYPE),64)
 CFLAGS += -m64
 endif
-CFLAGS += -I. -I$(DRIVER_INC)
+CFLAGS += -I. -I$(DRIVER_INC) -D__VMWARE__
 #LFLAGS = -lpthread
 DEPS = Makefile $(DRIVER_INC)/wfsctl.h wfsctl_cmd.h utils.h
 OBJS = wfsctl.o wfsctl_cmd.o utils.o
