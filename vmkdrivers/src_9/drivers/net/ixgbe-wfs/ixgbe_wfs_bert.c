@@ -71,22 +71,8 @@
 #define wfsbert			(iwa->wfsbert)
 #define myBertSeqNo		(iwa->bert_seqno)
 
+#ifndef __VMKLNX__
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 28)
-#ifdef __VMKLNX__
-struct timespec ns_to_timespec(const s64 nsec)
-{
-	struct timespec ts;
-
-	if (!nsec)
-		return (struct timespec) {0, 0};
-
-	ts.tv_sec = div_long_long_rem_signed(nsec, NSEC_PER_SEC, &ts.tv_nsec);
-	if (unlikely(nsec < 0))
-		set_normalized_timespec(&ts, ts.tv_sec, ts.tv_nsec);
-
-	return ts;
-}
-#endif /* __VMKLNX__ */
 struct timeval ns_to_timeval(const s64 nsec)
 {
         struct timespec ts = ns_to_timespec(nsec);
@@ -97,10 +83,9 @@ struct timeval ns_to_timeval(const s64 nsec)
 
         return tv;
 }
-#ifndef __VMKLNX__
 EXPORT_SYMBOL(ns_to_timeval);
-#endif /* __VMKLNX__ */
 #endif
+#endif /* __VMKLNX__ */
 
 /*
  *  Interface functions

@@ -93,7 +93,6 @@ static int get_wfsfib_entry(struct ixgbe_wfs_adapter *iwa, wfsctl_fib_data *fib,
     struct wfs_peer *peer;
 
     num = ixgbe_wfs_fib_get_entries(iwa, fib, max_entry);
-printk("get_wfsfib_entry: num= %d\n", num);
     for (i=0; i<num; i++) {
         peer = &wfspeer[fib[i].id-1];
 #if 0

@@ -43,6 +43,13 @@ static struct ixgbe_wfs_adapter ixgbe_wfs_adapter[IXGBE_MAX_WFS_NIC] =
             { [0 ... IXGBE_MAX_WFS_NIC-1] = { .state = unused, .wfs_id = 0 } };
 
 
+#ifdef __VMKLNX__
+static inline u64 ixgbe_wfs_time_to_usecs(struct timeval *tv)
+{
+        return ((tv->tv_sec * USEC_PER_SEC) + tv->tv_usec);
+}
+#endif /* __VMKLNX__ */
+
 /*
  * adapter bonding
  */
@@ -528,6 +535,9 @@ void ixgbe_wfs_send_bert(struct ixgbe_wfs_adapter *iwa, u8 wfsid)
     struct ixgbe_adapter *adapter;
     struct wfs_bert_cfg *bertcfg = &wfsbert[myID-1];
     netdev_tx_t rc;
+#ifdef __VMKLNX__
+	struct timeval current_time;
+#endif
 
     log_debug("Enter\n");
 
@@ -545,12 +555,11 @@ void ixgbe_wfs_send_bert(struct ixgbe_wfs_adapter *iwa, u8 wfsid)
     wfspkt = (struct wfspkt *)skb->data;
     wfsopt = wfspkt_getopt((struct wfspkt *)wfspkt, WFSOPT_BERT);
     wfsopt->val.bert.seqno = ++myBertSeqNo;
-#ifndef __VMKLNX__
-    wfsopt->val.bert.ts = ktime_to_us(ktime_get_real());
+#ifdef __VMKLNX__
+	do_gettimeofday(&current_time);
+	wfsopt->val.bert.ts = ixgbe_wfs_time_to_usecs(&current_time);
 #else
-	struct timespec ts;
-	ktime_get_real_ts(&ts);
-	wfsopt->val.bert.ts = ktime_to_ns(timespec_to_ktime(ts));
+    wfsopt->val.bert.ts = ktime_to_us(ktime_get_real());
 #endif /* __VMKLNX__ */
 
     /* first 5 packets to reset responder data/stats, no response required */
@@ -778,6 +787,9 @@ static void wfs_process_bert(struct ixgbe_wfs_adapter *iwa, struct ixgbe_adapter
     u_long elapse;
     u16 csum = 0;
     int wrong_size = 0;
+#ifdef __VMKLNX__
+	struct timeval current_time;
+#endif
 
     log_debug("port %d recv pkt len %d wfsid %d BERT (%s) seq %d len %d \n",
               adapter->wfs_port, pkt->len, pkt->src,
@@ -807,13 +819,11 @@ static void wfs_process_bert(struct ixgbe_wfs_adapter *iwa, struct ixgbe_adapter
             return;
 
         bertcfg->jfs_last = jiffies;
-#ifndef __VMKLNX__
-        elapse = ktime_to_us(ktime_get_real()) - opt->val.bert.ts;
+#ifdef __VMKLNX__
+		do_gettimeofday(&current_time);
+		elapse = ixgbe_wfs_time_to_usecs(&current_time) - opt->val.bert.ts;
 #else
-		struct timespec ts;
-		ktime_get_real_ts(&ts);
-		elapse = ktime_to_ns(timespec_to_ktime(ts)) - opt->val.bert.ts;
-		elapse = elapse / 1000;
+        elapse = ktime_to_us(ktime_get_real()) - opt->val.bert.ts;
 #endif /* __VMKLNX__ */
 
         if (elapse >= 0) {
