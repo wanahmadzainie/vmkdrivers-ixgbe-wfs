@@ -222,10 +222,12 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
     if(_IOC_DIR(cmd) & _IOC_WRITE)
         if(!access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd)))
             return -EFAULT;
+#endif /* __VMKLNX__ */
 
     /* Looks ok, let us continue */
     spin_lock_bh(&myDevLock);
 
+#ifndef __VMKLNX__
     /* get control data from user */
     if ((val = copy_from_user(&iocd, (wfsctl_data *)arg, sizeof(wfsctl_data)))) {
         log_err("copy_from_user failed, val=%ld\n", val);
@@ -366,9 +368,7 @@ static long ixgbe_cdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
     }
 
 dev_ioctl_done:
-#ifndef __VMKLNX__
     spin_unlock_bh(&myDevLock);
-#endif /* __VMKLNX__ */
 
     return retval;
 }
@@ -447,8 +447,10 @@ int ixgbe_wfs_ioc_init(struct ixgbe_wfs_adapter *iwa)
 
     myDevNo = 0;
     myDevOpenCount = 0;
+#endif /* __VMKLNX__ */
     spin_lock_init(&myDevLock);
 
+#ifndef __VMKLNX__
     /* allocate a major/minor number. */
     err = alloc_chrdev_region(&myDevNo, 0, 1, myDevName);
     if(err < 0) {
