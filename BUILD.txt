@@ -32,3 +32,24 @@ $ cd ..
 $ cd gcc-4.1.2-9
 $ sudo bash BUILD.txt
 $ cd ..
+
+2014-08-28 Changes is ESXi 5.1 Update 2 host
+1) Follow hardware MAC address
+=> http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1031111
+
+esxcfg-advcfg -s 1 /Net/FollowHardwareMac
+reboot
+esxcfg-advcfg -g /Net/FollowHardwareMac
+
+2) Enable NetQueue when using jumbo frames on ESXi 5.1
+=> http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2042874
+=> http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2033170
+=> http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1026094
+=> http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1004278
+
+esxcli system settings kernel set -s netPktHeapMaxSize -v 512
+esxcli system settings kernel set -s netPktPoolMaxSize -v 800
+reboot
+esxcli system settings kernel list | grep netPktHeapMaxSize
+esxcli system settings kernel list | grep netPktPoolMaxSize
+

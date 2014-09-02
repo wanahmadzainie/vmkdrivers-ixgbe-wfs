@@ -20,7 +20,11 @@
 struct sk_buff;
 
 struct wfs_bert_ctrl {
+#ifdef __VMKLNX__
+	struct delayed_work wk;	/* work */
+#else
     struct work_struct wk;  /* work */
+#endif
     /* BERT control */
     volatile int on;        /* switch on/off */
     volatile int running;   /* running state */

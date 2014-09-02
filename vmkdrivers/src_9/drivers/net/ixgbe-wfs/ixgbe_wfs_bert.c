@@ -90,6 +90,34 @@ EXPORT_SYMBOL(ns_to_timeval);
 /*
  *  Interface functions
  */
+#ifdef __VMKLNX__
+static void bert_request_main(struct work_struct *work)
+{
+	struct wfs_bert_ctrl *wk = (struct wfs_bert_ctrl *)work;
+	struct ixgbe_wfs_adapter *iwa = container_of(wk, struct ixgbe_wfs_adapter, bert_ctrl);
+	int i;
+	long jfs_sec, delay;
+
+	log_info("BERT workqueue running [jiffies= %lu]\n", jiffies);
+
+	// number of usecs per loop, a packet per loop
+	delay = 1 * 1000 * 1000 / wk->burst;
+	delay = delay > 10 ? delay : 6;
+	
+	jfs_sec = jiffies + HZ;
+
+	for (i = 0; i < wk->burst; i++) {
+		ixgbe_wfs_send_bert(iwa, wk->responder);
+		udelay(delay);
+	}
+
+	delay = 1;
+	if (jiffies < jfs_sec)
+		delay = jfs_sec-jiffies;
+
+	queue_delayed_work(request_queue, (struct delayed_work *)&myRequest, delay);
+}
+#else
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18)
 static void bert_request_main(ulong data)
 {
@@ -143,7 +171,7 @@ static void bert_request_main(struct work_struct *work)
     log_info("BERT workqueue exited\n");
     return;
 }
-
+#endif /* __VMKLNX__ */
 
 /*
  * Supported Functions
@@ -204,25 +232,51 @@ int ixgbe_wfs_bert_start_request(struct ixgbe_wfs_adapter *iwa, wfsctl_bert_cfg 
     spin_unlock(&bert_lock);
 
     /* start BERT wq */
+#ifdef __VMKLNX__
+	INIT_DELAYED_WORK((struct delayed_work *)&myRequest, bert_request_main);
+	queue_delayed_work(request_queue, (struct delayed_work *)&myRequest, HZ);
+#else
     INIT_BERT_WORK(&myRequest, bert_request_main);
     queue_work(request_queue, (struct work_struct *)&myRequest);
+#endif /* __VMKLNX__ */
 
     return 0;
 }
 
 void ixgbe_wfs_bert_stop_request(struct ixgbe_wfs_adapter *iwa)
 {
+#ifdef __VMKLNX__
+	struct wfs_bert_cfg *bertcfg = &wfsbert[myID-1];
+#endif /* __VMKLNX__ */
+
     spin_lock(&bert_lock);
 
     if (myRequest.on)
         myRequest.on = 0;
 
+#ifdef __VMKLNX__
+	cancel_delayed_work_sync((struct delayed_work *)&myRequest);
+#endif
+
     spin_unlock(&bert_lock);
+
+#ifdef __VMKLNX__
+    /* clean up BERT configuration */
+    bertcfg->on = 0;
+    bertcfg->data_len = 0;
+    bertcfg->data_csum = 0;
+    if (bertcfg->skb)
+        dev_kfree_skb_any(bertcfg->skb);
+    bertcfg->skb = NULL;
+
+	log_info("BERT workqueue stopped\n");
+#endif
 }
 
 int ixgbe_wfs_bert_init(struct ixgbe_wfs_adapter *iwa)
 {
     spin_lock_init(&bert_lock);
+
     request_queue = create_workqueue("ixgbe_wfs_bert");
     if (!request_queue) {
         log_err("BERT request workqueue create failed");

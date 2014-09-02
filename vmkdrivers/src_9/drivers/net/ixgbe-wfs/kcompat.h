@@ -2460,13 +2460,11 @@ static inline __u32 _kc_ethtool_cmd_speed(struct ethtool_cmd *ep)
 #endif
 #define dma_mapping_error(dev, dma_addr) pci_dma_mapping_error(dma_addr)
 
-#ifndef __VMKLNX__
 #ifdef CONFIG_NETDEVICES_MULTIQUEUE
 #define HAVE_TX_MQ
 #endif
-#endif /* __VMKLNX__ */
 
-#define HAVE_TX_MQ 1
+//#define HAVE_TX_MQ 1
 #define NETIF_F_MULTI_QUEUE 0
 #define system_state SYSTEM_POWER_OFF
 

@@ -6069,11 +6069,19 @@ static int ixgbe_open(struct net_device *netdev)
 	/* Notify the stack of the actual queue counts. */
 #ifdef __VMKLNX__
 	netif_set_real_num_tx_queues(netdev,
+#ifdef IXGBE_WFS
+                     iwa->primary->num_tx_queues + iwa->secondary->num_tx_queues);
+#else
 				     adapter->num_tx_queues);
+#endif /* IXGBE_WFS */
 #else
 	netif_set_real_num_tx_queues(netdev,
 				     adapter->num_rx_pools > 1 ? 1 :
+#ifdef IXGBE_WFS
+                     iwa->primary->num_tx_queues + iwa->secondary->num_tx_queues);
+#else
 				     adapter->num_tx_queues);
+#endif
 
 	err = netif_set_real_num_rx_queues(netdev,
 					   adapter->num_rx_pools > 1 ? 1 :
@@ -8150,6 +8158,10 @@ xmit_fcoe:
 
 #endif
 	ixgbe_maybe_stop_tx(tx_ring, DESC_NEEDED);
+
+#ifdef IXGBE_WFS
+	log_debug("port %d sent skb len %d\n", adapter->wfs_port, skb->len);
+#endif
 
 	return NETDEV_TX_OK;
 
